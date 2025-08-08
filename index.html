@@ -4,32 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>연차 관리 시스템 (DB 연동)</title>
+  
+  <!-- 라이브러리 로드 (CSS) -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
   
-  <!-- 1. SUPABASE 클라이언트 라이브러리 (가장 먼저 로드) -->
+  <!-- ======================================================= -->
+  <!-- ===== [수정됨] SUPABASE 라이브러리를 HEAD에서 먼저 로드 ===== -->
+  <!-- ======================================================= -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <style>
     .hidden { display: none; }
     .fc-daygrid-day.selected { background-color: #c7e0ff !important; }
-    .fc-event-pending { border: 2px solid #facc15 !important; }
-    .fc-event-approved { border: 2px solid #34d399 !important; }
-    .fc-event-used { border: 2px solid #a3a3a3 !important; }
-    .fc-event-rejected { border: 2px solid #f87171 !important; }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
 
-  <!-- ======================== HTML 부분 (기존과 동일) ======================== -->
-  <!-- 로그인 화면 -->
+  <!-- HTML 부분은 이전과 동일합니다 -->
   <div id="loginSection" class="flex flex-col items-center justify-center min-h-screen">
     <div class="max-w-xl w-full bg-white rounded shadow p-6 text-center">
       <h1 class="text-3xl font-bold mb-6">연차 관리 시스템</h1>
       <p class="mb-4 text-gray-600">사용자 유형을 선택하여 로그인하세요.</p>
       <div class="flex flex-col gap-6">
-        <!-- 직원 로그인 컨테이너 -->
         <div id="employeeLoginContainer" class="space-y-4">
           <h2 class="text-xl font-semibold text-gray-700">직원 로그인</h2>
           <form id="employeeLoginForm" class="space-y-3">
@@ -41,7 +38,6 @@
             <button type="button" id="goToOwnerLogin" onclick="showOwnerLogin()" class="text-blue-600 underline">사업주 로그인</button>
           </div>
         </div>
-        <!-- 사업주 로그인 컨테이너 -->
         <div id="ownerLoginContainer" class="hidden space-y-4">
           <h2 class="text-xl font-semibold text-gray-700">사업주 로그인</h2>
           <form id="adminLoginForm" class="space-y-3">
@@ -58,12 +54,10 @@
     </div>
   </div>
 
-  <!-- 직원 포털 -->
   <div id="employeePortal" class="hidden">
-    <!-- 직원 포털 내용은 아직 수정되지 않았으므로 기존과 동일 -->
+    <!-- 직원 포털 내용은 아직 수정되지 않았습니다 -->
   </div>
 
-  <!-- 관리자 포털 -->
   <div id="adminPortal" class="hidden">
     <div class="max-w-6xl mx-auto">
       <div class="flex justify-between items-center mb-4">
@@ -73,24 +67,14 @@
           <button onclick="adminLogout()" class="px-3 py-1 text-sm bg-gray-300 rounded">로그아웃</button>
         </div>
       </div>
-      <!-- 탭 버튼 -->
       <div class="flex gap-4 mb-4">
         <button id="tabList" class="tab-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded">연차 목록</button>
         <button id="tabCalendar" class="tab-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded">연차 달력</button>
         <button id="tabEmployees" class="tab-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded">직원 관리</button>
         <button id="tabSettings" class="tab-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded">사업장 설정</button>
       </div>
-
-      <!-- 연차 목록 섹션 (아직 수정 안 됨) -->
-      <div id="admLeaveListSection" class="section">
-          <p class="text-center text-gray-500 p-8">연차 목록 기능은 아직 데이터베이스와 연결되지 않았습니다.</p>
-      </div>
-      <!-- 연차 달력 섹션 (아직 수정 안 됨) -->
-      <div id="admCalendarSection" class="section" style="display:none;">
-          <p class="text-center text-gray-500 p-8">연차 달력 기능은 아직 데이터베이스와 연결되지 않았습니다.</p>
-      </div>
-
-      <!-- 직원 관리 섹션 (수정됨) -->
+      <div id="admLeaveListSection" class="section" style="display:none;"><p class="p-8 text-center text-gray-500">연차 목록 기능은 아직 데이터베이스와 연결되지 않았습니다.</p></div>
+      <div id="admCalendarSection" class="section" style="display:none;"><p class="p-8 text-center text-gray-500">연차 달력 기능은 아직 데이터베이스와 연결되지 않았습니다.</p></div>
       <div id="admEmployeeSection" class="section" style="display:none;">
         <div class="bg-white shadow rounded p-4">
           <h2 class="text-lg font-semibold mb-3">직원 목록</h2>
@@ -107,7 +91,7 @@
                 <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">삭제</th>
               </tr>
             </thead>
-            <tbody id="admEmployeesTable" class="divide-y divide-gray-200"></tbody>
+            <tbody id="admEmployeesTable"></tbody>
           </table>
           <h3 class="text-md font-semibold mb-2">직원 추가</h3>
           <form id="admAddEmployeeForm" class="grid grid-cols-1 md:grid-cols-6 gap-2 mb-4">
@@ -123,60 +107,43 @@
           </form>
         </div>
       </div>
-      
-       <!-- 사업장 설정 섹션 (아직 수정 안 됨) -->
-      <div id="admSettingsSection" class="section" style="display:none;">
-          <p class="text-center text-gray-500 p-8">사업장 설정 기능은 아직 데이터베이스와 연결되지 않았습니다.</p>
-      </div>
+      <div id="admSettingsSection" class="section" style="display:none;"><p class="p-8 text-center text-gray-500">사업장 설정 기능은 아직 데이터베이스와 연결되지 않았습니다.</p></div>
     </div>
   </div>
-
 
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
   <script>
-    // =================================================================
-    // ===== JAVASCRIPT 부분 (대부분의 로직이 여기에 있습니다) =====
-    // =================================================================
-
-    // --- 1. SUPABASE 클라이언트 설정 (가장 중요!) ---
+    // --- 1. SUPABASE 클라이언트 설정 ---
     const SUPABASE_URL = 'https://chnqtrmlglqdmzqwsazm.supabase.co'; // 당신의 Supabase URL
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobnF0cm1sZ2xxZG16cXdzYXptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODUxOTksImV4cCI6MjA3MDA2MTE5OX0.HBvXKoFAQsIjyePoMgtOpYZePoOHO9dYekcAsY1G6gQ'; // 당신의 Supabase Anon Key
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-
     // --- 2. SUPABASE와 연동된 새로운 함수들 ---
-
-    // [수정됨] 관리자 로그인
-    document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
+    document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('adminLoginId').value.trim();
       const password = document.getElementById('adminLoginPass').value.trim();
-
       try {
         const { data, error } = await db.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        alert(data.user.email + '님 환영합니다.');
+        alert(`${data.user.email}님 환영합니다.`);
         showAdminPortal();
       } catch (error) {
-        alert('로그인 실패: ' + error.message);
+        alert(`로그인 실패: ${error.message}`);
       }
     });
 
-    // [수정됨] 관리자 로그아웃
     async function adminLogout() {
-      const { error } = await db.auth.signOut();
-      if (error) console.error('로그아웃 에러', error);
+      await db.auth.signOut();
       location.reload();
     }
-    
-    // [수정됨] 직원 목록 화면에 그리기
+
     async function renderAdmEmployees() {
       try {
         const { data: employees, error } = await db.from('employees').select('*').order('id');
         if (error) throw error;
-
         const tbody = document.getElementById('admEmployeesTable');
         tbody.innerHTML = '';
         (employees || []).forEach(emp => {
@@ -188,18 +155,16 @@
             <td class="px-4 py-2 text-sm">${emp.position || '-'}</td>
             <td class="px-4 py-2 text-sm">${emp.entryDate || '-'}</td>
             <td class="px-4 py-2 text-sm">${emp.email || '-'}</td>
-            <td class="px-4 py-2 text-sm">${emp.password || '-'}</td>
-            <td class="px-4 py-2 text-center text-sm"><button class="text-red-600" onclick="deleteEmployee(${emp.id})">삭제</button></td>
-          `;
+            <td class="px-4 py-2 text-sm">${emp.password ? '******' : '-'}</td>
+            <td class="px-4 py-2 text-center text-sm"><button class="text-red-600" onclick="deleteEmployee(${emp.id})">삭제</button></td>`;
           tbody.appendChild(tr);
         });
       } catch (error) {
-        alert('직원 목록을 불러오는 중 오류 발생: ' + error.message);
+        alert(`직원 목록 로딩 오류: ${error.message}`);
       }
     }
 
-    // [수정됨] 새 직원 추가
-    document.getElementById('admAddEmployeeForm').addEventListener('submit', async function(e) {
+    document.getElementById('admAddEmployeeForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('admNewEmpName').value.trim();
       const dept = document.getElementById('admNewEmpDept').value.trim();
@@ -212,22 +177,18 @@
           alert('이름, 부서, 직책, 입사일은 필수입니다.');
           return;
       }
-
       try {
-        const { error } = await db.from('employees').insert([{ 
-            name, dept, position, entryDate, email, password: pass 
-        }]);
+        const { error } = await db.from('employees').insert([{ name, dept, position, entryDate, email, password: pass }]);
         if (error) throw error;
         alert('직원 추가 완료!');
-        this.reset();
+        e.target.reset();
         renderAdmEmployees();
       } catch (error) {
-        alert('직원 추가 실패: ' + error.message);
+        alert(`직원 추가 실패: ${error.message}`);
       }
     });
 
-    // [수정됨] 직원 삭제
-    window.deleteEmployee = async function(id) {
+    window.deleteEmployee = async (id) => {
       if (!confirm(`ID ${id} 직원을 정말 삭제하시겠습니까?`)) return;
       try {
         const { error } = await db.from('employees').delete().eq('id', id);
@@ -235,30 +196,23 @@
         alert('삭제되었습니다.');
         renderAdmEmployees();
       } catch (error) {
-        alert('직원 삭제 실패: ' + error.message);
+        alert(`직원 삭제 실패: ${error.message}`);
       }
     };
-
-
-    // --- 3. 화면 전환 및 기타 유틸리티 함수들 ---
     
-    // [포함됨] 관리자 포털 초기화
+    // --- 3. 화면 전환 및 기타 유틸리티 함수들 ---
     function initializeAdminPortal() {
-      // 관리자 포털이 열리면 가장 먼저 직원 목록을 불러옵니다.
       showAdminSection('employees');
       renderAdmEmployees();
-      
-      // 각 탭 버튼에 클릭 이벤트를 연결합니다.
       document.getElementById('tabList').onclick = () => showAdminSection('list');
       document.getElementById('tabCalendar').onclick = () => showAdminSection('calendar');
       document.getElementById('tabEmployees').onclick = () => {
         showAdminSection('employees');
-        renderAdmEmployees(); // 직원 관리 탭을 누를 때마다 목록을 새로고침합니다.
+        renderAdmEmployees();
       };
       document.getElementById('tabSettings').onclick = () => showAdminSection('settings');
     }
-    
-    // [포함됨] 로그인 화면 <-> 포털 화면 전환
+
     function showEmployeePortal() {
       document.getElementById('loginSection').classList.add('hidden');
       document.getElementById('adminPortal').classList.add('hidden');
@@ -272,7 +226,6 @@
       initializeAdminPortal();
     }
 
-    // [포함됨] 직원 로그인 <-> 사업주 로그인 폼 전환
     function showOwnerLogin() {
       document.getElementById('employeeLoginContainer').classList.add('hidden');
       document.getElementById('ownerLoginContainer').classList.remove('hidden');
@@ -283,7 +236,6 @@
       document.getElementById('employeeLoginContainer').classList.remove('hidden');
     }
     
-    // [포함됨] 관리자 포털 내부 탭 전환
     function showAdminSection(name) {
         const sections = {
             list: document.getElementById('admLeaveListSection'),
@@ -297,24 +249,17 @@
             }
         }
     }
-
-
-    // --- 4. 아직 수정되지 않은 기존 함수들 (localStorage 기반) ---
-    // 이 부분의 기능들은 다음 단계에서 데이터베이스와 연동할 예정입니다.
     
-    // 직원 로그인은 아직 localStorage를 사용합니다.
-    document.getElementById('employeeLoginForm').addEventListener('submit', function(e) {
+    function refreshAdminPortal() {
+        renderAdmEmployees();
+    }
+
+    // --- 4. 아직 수정되지 않은 기존 함수들 ---
+    document.getElementById('employeeLoginForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      // 이 부분은 나중에 Supabase DB 조회로 변경해야 합니다.
       alert('직원 로그인 기능은 아직 개발 중입니다.');
     });
 
-    function refreshAdminPortal() {
-        // 관리자 포털의 데이터를 다시 불러오는 로직
-        // 현재는 직원 목록만 다시 불러옵니다.
-        renderAdmEmployees();
-    }
-    
   </script>
 </body>
 </html>
