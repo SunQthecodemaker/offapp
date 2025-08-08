@@ -7,10 +7,7 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    .hidden { display: none; }
-    .fc-daygrid-day.selected { background-color: #c7e0ff !important; }
-  </style>
+  <style> .hidden { display: none; } </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
 
@@ -28,7 +25,7 @@
             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">로그인</button>
           </form>
           <div class="flex justify-between text-sm">
-            <button type="button" id="goToOwnerLogin" onclick="showOwnerLogin()" class="text-blue-600 underline">사업주 로그인</button>
+            <button type="button" onclick="showOwnerLogin()" class="text-blue-600 underline">사업주 로그인</button>
           </div>
         </div>
         <div id="ownerLoginContainer" class="hidden space-y-4">
@@ -39,7 +36,7 @@
             <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded">로그인</button>
           </form>
           <div class="flex justify-between items-center text-sm">
-            <button type="button" id="goToEmployeeLogin" onclick="showEmployeeLogin()" class="text-blue-600 underline">직원 로그인으로 돌아가기</button>
+            <button type="button" onclick="showEmployeeLogin()" class="text-blue-600 underline">직원 로그인으로 돌아가기</button>
           </div>
         </div>
       </div>
@@ -47,7 +44,7 @@
     </div>
   </div>
 
-  <div id="employeePortal" class="hidden"><!-- 직원 포털 (아직 미개발) --></div>
+  <div id="employeePortal" class="hidden"></div>
 
   <div id="adminPortal" class="hidden">
     <div class="max-w-6xl mx-auto">
@@ -60,29 +57,35 @@
       </div>
       <div class="flex gap-4 mb-4">
         <button id="tabList" class="tab-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded">연차 목록</button>
-        <button id="tabCalendar" class="tab-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded">연차 달력</button>
         <button id="tabEmployees" class="tab-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded">직원 관리</button>
         <button id="tabSettings" class="tab-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded">사업장 설정</button>
       </div>
-      <div id="admLeaveListSection" class="section" style="display:none;"><p class="p-8 text-center text-gray-500">연차 목록 기능은 아직 데이터베이스와 연결되지 않았습니다.</p></div>
-      <div id="admCalendarSection" class="section" style="display:none;"><p class="p-8 text-center text-gray-500">연차 달력 기능은 아직 데이터베이스와 연결되지 않았습니다.</p></div>
+      
+      <div id="admLeaveListSection" class="section" style="display:none;">
+        <div class="bg-white shadow rounded overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">직원</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">신청 날짜</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">사유</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
+            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">처리</th>
+          </tr></thead><tbody id="admRequestsTable"></tbody></table>
+        </div>
+      </div>
+      
       <div id="admEmployeeSection" class="section" style="display:none;">
         <div class="bg-white shadow rounded p-4">
           <h2 class="text-lg font-semibold mb-3">직원 목록</h2>
           <table class="min-w-full divide-y divide-gray-200 mb-4">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이름</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">부서</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">직책</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">입사일</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이메일</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">비밀번호</th>
-                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">삭제</th>
-              </tr>
-            </thead>
-            <tbody id="admEmployeesTable"></tbody>
+            <thead class="bg-gray-50"><tr>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">이름</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">부서</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">직책</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">입사일</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">이메일</th>
+              <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">수정/삭제</th>
+            </tr></thead><tbody id="admEmployeesTable"></tbody>
           </table>
           <h3 class="text-md font-semibold mb-2">직원 추가</h3>
           <form id="admAddEmployeeForm" class="grid grid-cols-1 md:grid-cols-6 gap-2 mb-4">
@@ -94,6 +97,18 @@
             <input id="admNewEmpPass" type="password" placeholder="직원 로그인 비번" class="p-2 border rounded" />
             <div class="md:col-span-6 text-right"><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></div>
           </form>
+          <div id="editEmployeeFormContainer" class="hidden mt-8">
+            <h3 class="text-md font-semibold mb-2">직원 정보 수정</h3>
+            <form id="admEditEmployeeForm" class="grid grid-cols-1 md:grid-cols-6 gap-2 mb-4">
+              <input id="admEditEmpName" type="text" class="p-2 border rounded" required />
+              <select id="admEditEmpDept" class="p-2 border rounded" required></select>
+              <select id="admEditEmpPosition" class="p-2 border rounded" required></select>
+              <input id="admEditEmpEntry" type="date" class="p-2 border rounded" required />
+              <input id="admEditEmpEmail" type="email" class="p-2 border rounded" />
+              <input id="admEditEmpPass" type="password" placeholder="새 비밀번호 (선택)" class="p-2 border rounded" />
+              <div class="md:col-span-6 text-right"><button type="button" id="editCancelBtn" class="bg-gray-400 text-white px-4 py-2 rounded mr-2">취소</button><button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">저장</button></div>
+            </form>
+          </div>
         </div>
       </div>
       <div id="admSettingsSection" class="section" style="display:none;">
@@ -101,18 +116,12 @@
           <h2 class="text-lg font-semibold mb-2">사업장 설정</h2>
           <div>
             <h3 class="text-md font-semibold mb-2">부서 목록</h3>
-            <table class="min-w-full divide-y divide-gray-200 mb-2">
-              <thead class="bg-gray-50"><tr><th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">부서명</th><th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">삭제</th></tr></thead>
-              <tbody id="deptList"></tbody>
-            </table>
+            <table class="min-w-full divide-y divide-gray-200 mb-2"><thead class="bg-gray-50"><tr><th class="px-3 py-2 text-left text-xs font-medium text-gray-500">부서명</th><th class="px-3 py-2 text-right text-xs font-medium text-gray-500">삭제</th></tr></thead><tbody id="deptList"></tbody></table>
             <form id="addDeptForm" class="flex gap-2"><input id="newDeptName" type="text" placeholder="새 부서명" class="flex-grow p-2 border rounded" required /><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></form>
           </div>
           <div>
             <h3 class="text-md font-semibold mb-2">직책 목록</h3>
-            <table class="min-w-full divide-y divide-gray-200 mb-2">
-              <thead class="bg-gray-50"><tr><th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">직책명</th><th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">삭제</th></tr></thead>
-              <tbody id="positionList"></tbody>
-            </table>
+            <table class="min-w-full divide-y divide-gray-200 mb-2"><thead class="bg-gray-50"><tr><th class="px-3 py-2 text-left text-xs font-medium text-gray-500">직책명</th><th class="px-3 py-2 text-right text-xs font-medium text-gray-500">삭제</th></tr></thead><tbody id="positionList"></tbody></table>
             <form id="addPositionForm" class="flex gap-2"><input id="newPositionName" type="text" placeholder="새 직책명" class="flex-grow p-2 border rounded" required /><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></form>
           </div>
         </div>
@@ -128,7 +137,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobnF0cm1sZ2xxZG16cXdzYXptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODUxOTksImV4cCI6MjA3MDA2MTE5OX0.HBvXKoFAQsIjyePoMgtOpYZePoOHO9dYekcAsY1G6gQ'; // 당신의 Supabase Anon Key
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- 2. SUPABASE와 연동된 함수들 ---
+    // --- 2. SUPABASE 연동 함수들 ---
 
     // 로그인/로그아웃
     document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
@@ -140,16 +149,12 @@
         if (error) throw error;
         alert(`${data.user.email}님 환영합니다.`);
         showAdminPortal();
-      } catch (error) {
-        alert(`로그인 실패: ${error.message}`);
-      }
+      } catch (error) { alert(`로그인 실패: ${error.message}`); }
     });
-    async function adminLogout() {
-      await db.auth.signOut();
-      location.reload();
-    }
+    async function adminLogout() { await db.auth.signOut(); location.reload(); }
 
-    // 직원 관리 (CRUD)
+    // 직원 관리
+    let editingEmpId = null;
     async function renderAdmEmployees() {
       try {
         const { data: employees, error } = await db.from('employees').select('*').order('id');
@@ -162,13 +167,10 @@
             <td class="px-4 py-2 text-sm">${emp.id}</td><td class="px-4 py-2 text-sm">${emp.name || '-'}</td>
             <td class="px-4 py-2 text-sm">${emp.dept || '-'}</td><td class="px-4 py-2 text-sm">${emp.position || '-'}</td>
             <td class="px-4 py-2 text-sm">${emp.entryDate || '-'}</td><td class="px-4 py-2 text-sm">${emp.email || '-'}</td>
-            <td class="px-4 py-2 text-sm">${emp.password ? '******' : '-'}</td>
-            <td class="px-4 py-2 text-center text-sm"><button class="text-red-600" onclick="deleteEmployee(${emp.id})">삭제</button></td>`;
+            <td class="px-4 py-2 text-center text-sm"><button class="text-blue-600 mr-2" onclick="showEditEmployee(${emp.id})">수정</button><button class="text-red-600" onclick="deleteEmployee(${emp.id})">삭제</button></td>`;
           tbody.appendChild(tr);
         });
-      } catch (error) {
-        alert(`직원 목록 로딩 오류: ${error.message}`);
-      }
+      } catch (error) { alert(`직원 목록 로딩 오류: ${error.message}`); }
     }
     document.getElementById('admAddEmployeeForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -182,9 +184,7 @@
       try {
         const { error } = await db.from('employees').insert([{ name, dept, position, entryDate, email, password: pass }]);
         if (error) throw error;
-        alert('직원 추가 완료!');
-        e.target.reset();
-        renderAdmEmployees();
+        alert('직원 추가 완료!'); e.target.reset(); renderAdmEmployees();
       } catch (error) { alert(`직원 추가 실패: ${error.message}`); }
     });
     window.deleteEmployee = async (id) => {
@@ -192,86 +192,148 @@
       try {
         const { error } = await db.from('employees').delete().eq('id', id);
         if (error) throw error;
-        alert('삭제되었습니다.');
-        renderAdmEmployees();
+        alert('삭제되었습니다.'); renderAdmEmployees();
       } catch (error) { alert(`직원 삭제 실패: ${error.message}`); }
     };
+    async function showEditEmployee(id) {
+        try {
+            const { data: emp, error } = await db.from('employees').select('*').eq('id', id).single();
+            if (error) throw error;
+            editingEmpId = id;
+            document.getElementById('admEditEmpName').value = emp.name;
+            document.getElementById('admEditEmpDept').value = emp.dept;
+            document.getElementById('admEditEmpPosition').value = emp.position;
+            document.getElementById('admEditEmpEntry').value = emp.entryDate;
+            document.getElementById('admEditEmpEmail').value = emp.email;
+            document.getElementById('admEditEmpPass').value = ''; // 비밀번호는 비워둠
+            document.getElementById('editEmployeeFormContainer').classList.remove('hidden');
+        } catch(error) { alert(`직원 정보 로딩 실패: ${error.message}`) }
+    }
+    document.getElementById('admEditEmployeeForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const updatedInfo = {
+            name: document.getElementById('admEditEmpName').value.trim(),
+            dept: document.getElementById('admEditEmpDept').value.trim(),
+            position: document.getElementById('admEditEmpPosition').value.trim(),
+            entryDate: document.getElementById('admEditEmpEntry').value,
+            email: document.getElementById('admEditEmpEmail').value.trim(),
+        };
+        const newPass = document.getElementById('admEditEmpPass').value.trim();
+        if(newPass) updatedInfo.password = newPass;
+        try {
+            const { error } = await db.from('employees').update(updatedInfo).eq('id', editingEmpId);
+            if (error) throw error;
+            alert('직원 정보가 수정되었습니다.');
+            document.getElementById('editEmployeeFormContainer').classList.add('hidden');
+            renderAdmEmployees();
+        } catch(error) { alert(`직원 정보 수정 실패: ${error.message}`); }
+    });
+    document.getElementById('editCancelBtn').addEventListener('click', () => {
+        document.getElementById('editEmployeeFormContainer').classList.add('hidden');
+    });
 
-    // [새로 추가됨] 사업장 설정 (부서/직책 관리)
+    // 사업장 설정
     async function renderSettings() {
-        // 부서 목록 렌더링
-        try {
-            const { data: depts, error } = await db.from('departments').select('id, name');
-            if (error) throw error;
-            const deptTbody = document.getElementById('deptList');
-            deptTbody.innerHTML = '';
-            (depts || []).forEach(d => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="px-3 py-1 text-sm">${d.name}</td><td class="px-3 py-1 text-right"><button class="text-red-600" onclick="deleteDept(${d.id})">삭제</button></td>`;
-                deptTbody.appendChild(tr);
-            });
-        } catch(error) { alert(`부서 목록 로딩 실패: ${error.message}`); }
-
-        // 직책 목록 렌더링
-        try {
-            const { data: positions, error } = await db.from('positions').select('id, name');
-            if (error) throw error;
-            const posTbody = document.getElementById('positionList');
-            posTbody.innerHTML = '';
-            (positions || []).forEach(p => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="px-3 py-1 text-sm">${p.name}</td><td class="px-3 py-1 text-right"><button class="text-red-600" onclick="deletePosition(${p.id})">삭제</button></td>`;
-                posTbody.appendChild(tr);
-            });
-        } catch(error) { alert(`직책 목록 로딩 실패: ${error.message}`); }
+        const { data: depts, error: deptError } = await db.from('departments').select('id, name');
+        if(deptError) { alert(`부서 목록 로딩 실패: ${deptError.message}`); return; }
+        const deptTbody = document.getElementById('deptList');
+        deptTbody.innerHTML = '';
+        (depts || []).forEach(d => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td class="px-3 py-1 text-sm">${d.name}</td><td class="px-3 py-1 text-right"><button class="text-red-600" onclick="deleteDept(${d.id})">삭제</button></td>`;
+            deptTbody.appendChild(tr);
+        });
+        const { data: positions, error: posError } = await db.from('positions').select('id, name');
+        if(posError) { alert(`직책 목록 로딩 실패: ${posError.message}`); return; }
+        const posTbody = document.getElementById('positionList');
+        posTbody.innerHTML = '';
+        (positions || []).forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td class="px-3 py-1 text-sm">${p.name}</td><td class="px-3 py-1 text-right"><button class="text-red-600" onclick="deletePosition(${p.id})">삭제</button></td>`;
+            posTbody.appendChild(tr);
+        });
     }
     document.getElementById('addDeptForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const input = document.getElementById('newDeptName');
-        const name = input.value.trim();
-        if(!name) return;
-        try {
-            const { error } = await db.from('departments').insert([{ name }]);
-            if (error) throw error;
-            input.value = '';
-            renderSettings();
-        } catch(error) { alert(`부서 추가 실패: ${error.message}`); }
+        const input = document.getElementById('newDeptName'); const name = input.value.trim(); if(!name) return;
+        try { const { error } = await db.from('departments').insert([{ name }]); if (error) throw error; input.value = ''; renderSettings(); } catch(error) { alert(`부서 추가 실패: ${error.message}`); }
     });
     window.deleteDept = async (id) => {
         if (!confirm(`해당 부서를 삭제하시겠습니까?`)) return;
-        try {
-            const { error } = await db.from('departments').delete().eq('id', id);
-            if (error) throw error;
-            renderSettings();
-        } catch (error) { alert(`부서 삭제 실패: ${error.message}`); }
+        try { const { error } = await db.from('departments').delete().eq('id', id); if (error) throw error; renderSettings(); } catch (error) { alert(`부서 삭제 실패: ${error.message}`); }
     };
     document.getElementById('addPositionForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const input = document.getElementById('newPositionName');
-        const name = input.value.trim();
-        if(!name) return;
-        try {
-            const { error } = await db.from('positions').insert([{ name }]);
-            if (error) throw error;
-            input.value = '';
-            renderSettings();
-        } catch(error) { alert(`직책 추가 실패: ${error.message}`); }
+        const input = document.getElementById('newPositionName'); const name = input.value.trim(); if(!name) return;
+        try { const { error } = await db.from('positions').insert([{ name }]); if (error) throw error; input.value = ''; renderSettings(); } catch(error) { alert(`직책 추가 실패: ${error.message}`); }
     });
     window.deletePosition = async (id) => {
         if (!confirm(`해당 직책을 삭제하시겠습니까?`)) return;
-        try {
-            const { error } = await db.from('positions').delete().eq('id', id);
-            if (error) throw error;
-            renderSettings();
-        } catch (error) { alert(`직책 삭제 실패: ${error.message}`); }
+        try { const { error } = await db.from('positions').delete().eq('id', id); if (error) throw error; renderSettings(); } catch (error) { alert(`직책 삭제 실패: ${error.message}`); }
     };
 
-    // --- 3. 화면 전환 및 기타 유틸리티 함수들 ---
+    // 연차 목록 관리
+    async function renderAdmRequestTable() {
+        try {
+            const { data, error } = await db.from('leave_requests').select('*').order('id', { ascending: false });
+            if (error) throw error;
+            const tbody = document.getElementById('admRequestsTable');
+            tbody.innerHTML = '';
+            (data || []).forEach(req => {
+                const tr = document.createElement('tr');
+                let actions = '-';
+                if (req.status === 'pending') {
+                    actions = `<button class="text-green-600 mr-2" onclick="updateRequestStatus(${req.id}, 'approved')">승인</button><button class="text-red-600" onclick="updateRequestStatus(${req.id}, 'rejected')">반려</button>`;
+                }
+                tr.innerHTML = `
+                    <td class="px-4 py-2 text-sm">${req.employeeName}</td>
+                    <td class="px-4 py-2 text-sm">${(req.dates || []).join(', ')}</td>
+                    <td class="px-4 py-2 text-sm">${req.reason}</td>
+                    <td class="px-4 py-2 text-sm">${req.status}</td>
+                    <td class="px-4 py-2 text-center text-sm">${actions}</td>`;
+                tbody.appendChild(tr);
+            });
+        } catch(error) { alert(`연차 목록 로딩 실패: ${error.message}`); }
+    }
+    async function updateRequestStatus(id, status) {
+        if(!confirm(`이 신청을 '${status}' 상태로 변경하시겠습니까?`)) return;
+        try {
+            const { error } = await db.from('leave_requests').update({ status }).eq('id', id);
+            if (error) throw error;
+            alert('상태가 변경되었습니다.');
+            renderAdmRequestTable();
+        } catch(error) { alert(`상태 변경 실패: ${error.message}`); }
+    }
+
+    // [중요!] 직원 추가 폼에 부서/직책 드롭다운 채우기
+    async function populateDeptPositionSelects() {
+        try {
+            const { data: depts, error: deptError } = await db.from('departments').select('name');
+            if(deptError) throw deptError;
+            const { data: positions, error: posError } = await db.from('positions').select('name');
+            if(posError) throw posError;
+
+            const deptSelects = [document.getElementById('admNewEmpDept'), document.getElementById('admEditEmpDept')];
+            const posSelects = [document.getElementById('admNewEmpPosition'), document.getElementById('admEditEmpPosition')];
+
+            deptSelects.forEach(sel => {
+                sel.innerHTML = '<option value="" disabled selected>부서 선택</option>';
+                (depts || []).forEach(d => sel.innerHTML += `<option value="${d.name}">${d.name}</option>`);
+            });
+            posSelects.forEach(sel => {
+                sel.innerHTML = '<option value="" disabled selected>직책 선택</option>';
+                (positions || []).forEach(p => sel.innerHTML += `<option value="${p.name}">${p.name}</option>`);
+            });
+        } catch(error) { alert(`부서/직책 목록 로딩 실패: ${error.message}`); }
+    }
+
+    // --- 3. 화면 전환 및 초기화 함수들 ---
     function initializeAdminPortal() {
-      showAdminSection('employees');
-      renderAdmEmployees();
-      document.getElementById('tabList').onclick = () => showAdminSection('list');
-      document.getElementById('tabCalendar').onclick = () => showAdminSection('calendar');
+      showAdminSection('list');
+      renderAdmRequestTable();
+      populateDeptPositionSelects(); // 관리자 포털이 열릴 때 드롭다운 메뉴를 채웁니다.
+      
+      document.getElementById('tabList').onclick = () => { showAdminSection('list'); renderAdmRequestTable(); };
       document.getElementById('tabEmployees').onclick = () => { showAdminSection('employees'); renderAdmEmployees(); };
       document.getElementById('tabSettings').onclick = () => { showAdminSection('settings'); renderSettings(); };
     }
@@ -280,36 +342,18 @@
     function showOwnerLogin() { document.getElementById('employeeLoginContainer').classList.add('hidden'); document.getElementById('ownerLoginContainer').classList.remove('hidden'); }
     function showEmployeeLogin() { document.getElementById('ownerLoginContainer').classList.add('hidden'); document.getElementById('employeeLoginContainer').classList.remove('hidden'); }
     function showAdminSection(name) {
-        const sections = { list: document.getElementById('admLeaveListSection'), calendar: document.getElementById('admCalendarSection'), employees: document.getElementById('admEmployeeSection'), settings: document.getElementById('admSettingsSection'), };
+        const sections = { list: document.getElementById('admLeaveListSection'), employees: document.getElementById('admEmployeeSection'), settings: document.getElementById('admSettingsSection'), };
         for (const key in sections) { if(sections[key]) { sections[key].style.display = key === name ? 'block' : 'none'; } }
     }
     function refreshAdminPortal() {
-      const activeTab = document.querySelector('.section:not([style*="display:none"])');
-      if (activeTab.id === 'admEmployeeSection') renderAdmEmployees();
-      if (activeTab.id === 'admSettingsSection') renderSettings();
+      const activeTabId = document.querySelector('.section:not([style*="display:none"])')?.id;
+      if (activeTabId === 'admEmployeeSection') renderAdmEmployees();
+      else if (activeTabId === 'admSettingsSection') renderSettings();
+      else if (activeTabId === 'admLeaveListSection') renderAdmRequestTable();
     }
     
-    // --- 4. 아직 수정되지 않은 기존 함수들 ---
+    // --- 4. 아직 개발되지 않은 기능 ---
     document.getElementById('employeeLoginForm').addEventListener('submit', (e) => { e.preventDefault(); alert('직원 로그인 기능은 아직 개발 중입니다.'); });
   </script>
 </body>
-</html>```
-
----
-
-### **안내**
-
-1.  **사용 방법은 이전과 같습니다.**
-    *   이 코드를 `index.html`에 덮어쓰고 저장합니다.
-    *   **GitHub Desktop**으로 변경 내용을 **Commit** 하고 **Push** 합니다.
-    *   Netlify가 배포를 마칠 때까지 1분 정도 기다린 후, 앱 주소로 접속합니다.
-
-2.  **새롭게 작동하는 기능**
-    *   관리자로 로그인한 후, **'사업장 설정' 탭**을 클릭하세요.
-    *   이제 '새 부서명'과 '새 직책명'을 입력하고 '추가' 버튼을 누르면 목록이 갱신되고, 데이터는 Supabase의 `departments`와 `positions` 테이블에 저장됩니다.
-    *   '삭제' 버튼도 정상적으로 작동합니다.
-    *   또한, '직원 추가' 폼의 '부서 선택', '직책 선택' 부분이 아직 드롭다운 메뉴로 바뀌지 않았습니다. 이 부분은 다음 단계에서 수정할 예정입니다. 지금은 텍스트로 직접 입력해주세요.
-
-이제 앱의 두 가지 핵심 설정 기능이 데이터베이스와 완벽하게 연동되었습니다.
-
-**테스트해보시고, 부서와 직책이 잘 추가되고 삭제되는지 확인해주세요!**
+</html>
