@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>연차 관리 시스템 (관리자 기능 복원)</title>
+  <title>연차 관리 시스템 (DB 최종본)</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style> .hidden { display: none; } </style>
@@ -37,7 +37,7 @@
     </div>
   </div>
 
-  <!-- 직원 포털 (아직 비어 있음) -->
+  <!-- 직원 포털 -->
   <div id="employeePortal" class="hidden"></div>
 
   <!-- 관리자 포털 -->
@@ -56,9 +56,9 @@
           <h2 class="text-lg font-semibold mb-3">직원 목록</h2>
           <table class="min-w-full divide-y divide-gray-200 mb-4">
             <thead class="bg-gray-50"><tr>
-              <th class="p-2 text-left text-xs font-medium text-gray-500">ID</th><th class="p-2 text-left text-xs font-medium text-gray-500">이름</th>
-              <th class="p-2 text-left text-xs font-medium text-gray-500">부서</th><th class="p-2 text-left text-xs font-medium text-gray-500">직책</th>
-              <th class="p-2 text-center text-xs font-medium text-gray-500">수정/삭제</th>
+              <th class="p-2 text-left text-xs">ID</th><th class="p-2 text-left text-xs">이름</th>
+              <th class="p-2 text-left text-xs">부서</th><th class="p-2 text-left text-xs">직책</th>
+              <th class="p-2 text-center text-xs">수정/삭제</th>
             </tr></thead><tbody id="admEmployeesTable"></tbody>
           </table>
           <h3 class="text-md font-semibold mb-2">직원 추가</h3>
@@ -83,19 +83,13 @@
         <div class="bg-white shadow rounded p-4 space-y-6">
           <h2 class="text-lg font-semibold mb-2">사업장 설정</h2>
           <div>
-            <h3 class="text-md font-semibold mb-2">부서 목록</h3>
-            <table class="min-w-full divide-y divide-gray-200 mb-2">
-              <thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs font-medium text-gray-500">부서명</th><th class="p-2 text-right text-xs font-medium text-gray-500">삭제</th></tr></thead>
-              <tbody id="deptList"></tbody>
-            </table>
+            <h3 class="text-md font-semibold">부서 목록</h3>
+            <table class="min-w-full mb-2"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">부서명</th><th class="p-2 text-right text-xs">삭제</th></tr></thead><tbody id="deptList"></tbody></table>
             <form id="addDeptForm" class="flex gap-2"><input id="newDeptName" type="text" placeholder="새 부서명" class="flex-grow p-2 border rounded" required /><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></form>
           </div>
           <div>
-            <h3 class="text-md font-semibold mb-2">직책 목록</h3>
-            <table class="min-w-full divide-y divide-gray-200 mb-2">
-                <thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs font-medium text-gray-500">직책명</th><th class="p-2 text-right text-xs font-medium text-gray-500">삭제</th></tr></thead>
-                <tbody id="positionList"></tbody>
-            </table>
+            <h3 class="text-md font-semibold">직책 목록</h3>
+            <table class="min-w-full mb-2"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">직책명</th><th class="p-2 text-right text-xs">삭제</th></tr></thead><tbody id="positionList"></tbody></table>
             <form id="addPositionForm" class="flex gap-2"><input id="newPositionName" type="text" placeholder="새 직책명" class="flex-grow p-2 border rounded" required /><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></form>
           </div>
         </div>
@@ -104,141 +98,115 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // --- 1. SUPABASE 클라이언트 설정 ---
-      const SUPABASE_URL = 'https://chnqtrmlglqdmzqwsazm.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobnF0cm1sZ2xxZG16cXdzYXptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODUxOTksImV4cCI6MjA3MDA2MTE5OX0.HBvXKoFAQsIjyePoMgtOpYZePoOHO9dYekcAsY1G6gQ';
-      const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // --- 1. SUPABASE 클라이언트 설정 및 전역 변수 ---
+    const SUPABASE_URL = 'https://chnqtrmlglqdmzqwsazm.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobnF0cm1sZ2xxZG16cXdzYXptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODUxOTksImV4cCI6MjA3MDA2MTE5OX0.HBvXKoFAQsIjyePoMgtOpYZePoOHO9dYekcAsY1G6gQ';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let editingEmpId = null;
+    
+    // --- DOM 요소 ---
+    const loginSection = document.getElementById('loginSection');
+    const employeeLoginContainer = document.getElementById('employeeLoginContainer');
+    const ownerLoginContainer = document.getElementById('ownerLoginContainer');
+    const adminPortal = document.getElementById('adminPortal');
 
-      // --- DOM 요소 ---
-      const loginSection = document.getElementById('loginSection');
-      const employeeLoginContainer = document.getElementById('employeeLoginContainer');
-      const ownerLoginContainer = document.getElementById('ownerLoginContainer');
-      const adminPortal = document.getElementById('adminPortal');
-      let editingEmpId = null;
-
-      // --- 화면 전환 함수 ---
-      window.showOwnerLogin = () => { employeeLoginContainer.classList.add('hidden'); ownerLoginContainer.classList.remove('hidden'); };
-      window.showEmployeeLogin = () => { ownerLoginContainer.classList.add('hidden'); employeeLoginContainer.classList.remove('hidden'); };
-      const showAdminPortal = () => { loginSection.classList.add('hidden'); adminPortal.classList.remove('hidden'); initializeAdminPortal(); };
-      const showAdminSection = (name) => {
-        ['admEmployeeSection', 'admSettingsSection'].forEach(id => {
-          document.getElementById(id).style.display = id === name ? 'block' : 'none';
-        });
-      };
-
-      // --- 초기화 함수 ---
-      const initializeAdminPortal = () => {
-        showAdminSection('employees');
-        renderAdmEmployees();
-        populateDeptPositionSelects();
-        document.getElementById('tabEmployees').onclick = () => { showAdminSection('employees'); renderAdmEmployees(); };
-        document.getElementById('tabSettings').onclick = () => { showAdminSection('settings'); renderSettings(); };
-      };
-
-      // --- 이벤트 리스너 ---
-      document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('adminLoginId').value.trim();
-        const password = document.getElementById('adminLoginPass').value.trim();
-        try {
-          const { error } = await db.auth.signInWithPassword({ email, password });
-          if (error) throw error;
-          showAdminPortal();
-        } catch (error) { alert(`로그인 실패: ${error.message}`); }
+    // --- 화면 전환 함수 ---
+    function showOwnerLogin() { employeeLoginContainer.classList.add('hidden'); ownerLoginContainer.classList.remove('hidden'); }
+    function showEmployeeLogin() { ownerLoginContainer.classList.add('hidden'); employeeLoginContainer.classList.remove('hidden'); }
+    function showAdminPortal() { loginSection.classList.add('hidden'); adminPortal.classList.remove('hidden'); initializeAdminPortal(); }
+    function showAdminSection(name) {
+      ['admEmployeeSection', 'admSettingsSection'].forEach(id => {
+        document.getElementById(id).style.display = id === name ? 'block' : 'none';
       });
-      document.getElementById('employeeLoginForm').addEventListener('submit', (e) => { e.preventDefault(); alert('직원 로그인 기능은 아직 개발 중입니다.'); });
-      window.adminLogout = async () => { await db.auth.signOut(); location.reload(); };
+    }
 
-      // --- DB 연동 함수: 직원 관리 ---
-      const renderAdmEmployees = async () => { /* ... */ }; // 아래에서 정의
-      document.getElementById('admAddEmployeeForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const newEmp = { name: admNewEmpName.value, dept: admNewEmpDept.value, position: admNewEmpPosition.value };
-        try {
-          const { error } = await db.from('employees').insert([newEmp]);
-          if (error) throw error;
-          e.target.reset(); renderAdmEmployees();
-        } catch(error) { alert('직원 추가 실패'); }
-      });
-      window.deleteEmployee = async (id) => {
-        if (!confirm(`ID ${id} 직원을 삭제하시겠습니까?`)) return;
-        try {
-          const { error } = await db.from('employees').delete().eq('id', id);
-          if (error) throw error;
-          renderAdmEmployees();
-        } catch (error) { alert('직원 삭제 실패'); }
-      };
-      window.showEditEmployee = async (id) => {
-        try {
-            const { data: emp, error } = await db.from('employees').select('*').eq('id', id).single();
-            if (error) throw error;
-            editingEmpId = id;
-            admEditEmpName.value = emp.name; admEditEmpDept.value = emp.dept; admEditEmpPosition.value = emp.position;
-            editEmployeeFormContainer.classList.remove('hidden');
-        } catch(error) { alert(`직원 정보 로딩 실패`); }
-      };
-      document.getElementById('admEditEmployeeForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const updatedInfo = { name: admEditEmpName.value, dept: admEditEmpDept.value, position: admEditEmpPosition.value };
-          try {
-              const { error } = await db.from('employees').update(updatedInfo).eq('id', editingEmpId);
-              if (error) throw error;
-              alert('직원 정보가 수정되었습니다.');
-              editEmployeeFormContainer.classList.add('hidden');
-              renderAdmEmployees();
-          } catch(error) { alert(`직원 정보 수정 실패`); }
-      });
-      document.getElementById('editCancelBtn').addEventListener('click', () => { editEmployeeFormContainer.classList.add('hidden'); });
+    // --- 관리자 포털 초기화 ---
+    function initializeAdminPortal() {
+      showAdminSection('employees');
+      renderAdmEmployees();
+      populateDeptPositionSelects();
+      document.getElementById('tabEmployees').onclick = () => { showAdminSection('employees'); renderAdmEmployees(); };
+      document.getElementById('tabSettings').onclick = () => { showAdminSection('settings'); renderSettings(); };
+    }
 
-      // --- DB 연동 함수: 사업장 설정 ---
-      const renderSettings = async () => {
-        const { data: depts, error: dErr } = await db.from('departments').select('*');
-        if(dErr){ alert(`부서 로딩 실패`); return; }
-        deptList.innerHTML = '';
-        (depts||[]).forEach(d => { deptList.innerHTML += `<tr><td class="p-2">${d.name}</td><td class="p-2 text-right"><button class="text-red-600" onclick="deleteDept(${d.id})">삭제</button></td></tr>`; });
-        const { data: pos, error: pErr } = await db.from('positions').select('*');
-        if(pErr){ alert(`직책 로딩 실패`); return; }
-        positionList.innerHTML = '';
-        (pos||[]).forEach(p => { positionList.innerHTML += `<tr><td class="p-2">${p.name}</td><td class="p-2 text-right"><button class="text-red-600" onclick="deletePosition(${p.id})">삭제</button></td></tr>`; });
-      };
-      document.getElementById('addDeptForm').addEventListener('submit', async (e) => {
-        e.preventDefault(); const name = newDeptName.value.trim();
-        const { error } = await db.from('departments').insert([{ name }]); if(error) alert(`부서 추가 실패`); else { newDeptName.value = ''; renderSettings(); }
-      });
-      window.deleteDept = async (id) => { if (!confirm(`삭제?`)) return; const { error } = await db.from('departments').delete().eq('id', id); if(error) alert(`부서 삭제 실패`); else renderSettings(); };
-      document.getElementById('addPositionForm').addEventListener('submit', async (e) => {
-        e.preventDefault(); const name = newPositionName.value.trim();
-        const { error } = await db.from('positions').insert([{ name }]); if(error) alert(`직책 추가 실패`); else { newPositionName.value = ''; renderSettings(); }
-      });
-      window.deletePosition = async (id) => { if (!confirm(`삭제?`)) return; const { error } = await db.from('positions').delete().eq('id', id); if(error) alert(`직책 삭제 실패`); else renderSettings(); };
-
-      // --- DB 연동 함수: 드롭다운 채우기 ---
-      const populateDeptPositionSelects = async () => {
-          const { data: depts, error: dErr } = await db.from('departments').select('name');
-          const { data: pos, error: pErr } = await db.from('positions').select('name');
-          if(dErr || pErr) { alert(`부서/직책 목록 로딩 실패`); return; }
-          [admNewEmpDept, admEditEmpDept].forEach(sel => {
-              sel.innerHTML = '<option value="" disabled selected>부서 선택</option>';
-              (depts || []).forEach(d => sel.innerHTML += `<option value="${d.name}">${d.name}</option>`);
-          });
-          [admNewEmpPosition, admEditEmpPosition].forEach(sel => {
-              sel.innerHTML = '<option value="" disabled selected>직책 선택</option>';
-              (pos || []).forEach(p => sel.innerHTML += `<option value="${p.name}">${p.name}</option>`);
-          });
-      };
-      
-      // 직원 관리 렌더링 함수 재정의 (HTML 구조 변경으로 인한 재정의)
-      window.renderAdmEmployees = async () => {
+    // --- DB 연동 함수: 직원 관리 ---
+    async function renderAdmEmployees() {
+      try {
         const { data, error } = await db.from('employees').select('*').order('id');
-        if (error) { alert('직원 목록 로딩 실패'); return; }
+        if (error) throw error;
         const tbody = document.getElementById('admEmployeesTable');
         tbody.innerHTML = '';
         (data || []).forEach(emp => {
           tbody.innerHTML += `<tr><td class="p-2">${emp.id}</td><td class="p-2">${emp.name}</td><td class="p-2">${emp.dept}</td><td class="p-2">${emp.position}</td><td class="p-2 text-center"><button class="text-blue-600 mr-2" onclick="showEditEmployee(${emp.id})">수정</button><button class="text-red-600" onclick="deleteEmployee(${emp.id})">삭제</button></td></tr>`;
         });
-      };
+      } catch (e) { alert('직원 목록 로딩 실패'); }
+    }
+    window.deleteEmployee = async (id) => {
+      if (!confirm(`ID ${id} 직원을 삭제하시겠습니까?`)) return;
+      try { const { error } = await db.from('employees').delete().eq('id', id); if (error) throw error; renderAdmEmployees(); } catch (e) { alert('직원 삭제 실패'); }
+    };
+    window.showEditEmployee = async (id) => {
+      try {
+        const { data: emp, error } = await db.from('employees').select('*').eq('id', id).single();
+        if (error) throw error;
+        editingEmpId = id;
+        admEditEmpName.value = emp.name; admEditEmpDept.value = emp.dept; admEditEmpPosition.value = emp.position;
+        editEmployeeFormContainer.classList.remove('hidden');
+      } catch(e) { alert('직원 정보 로딩 실패'); }
+    };
+    
+    // --- DB 연동 함수: 사업장 설정 ---
+    async function renderSettings() {
+      const { data: depts, error: dErr } = await db.from('departments').select('*');
+      if (dErr) { alert('부서 로딩 실패'); return; }
+      deptList.innerHTML = '';
+      (depts||[]).forEach(d => { deptList.innerHTML += `<tr><td class="p-2">${d.name}</td><td class="p-2 text-right"><button class="text-red-600" onclick="deleteDept(${d.id})">삭제</button></td></tr>`; });
+      const { data: pos, error: pErr } = await db.from('positions').select('*');
+      if (pErr) { alert('직책 로딩 실패'); return; }
+      positionList.innerHTML = '';
+      (pos||[]).forEach(p => { positionList.innerHTML += `<tr><td class="p-2">${p.name}</td><td class="p-2 text-right"><button class="text-red-600" onclick="deletePosition(${p.id})">삭제</button></td></tr>`; });
+    }
+    window.deleteDept = async (id) => { if (!confirm('삭제?')) return; const { error } = await db.from('departments').delete().eq('id', id); if(error) alert('부서 삭제 실패'); else renderSettings(); };
+    window.deletePosition = async (id) => { if (!confirm('삭제?')) return; const { error } = await db.from('positions').delete().eq('id', id); if(error) alert('직책 삭제 실패'); else renderSettings(); };
+    
+    // --- DB 연동 함수: 드롭다운 ---
+    async function populateDeptPositionSelects() {
+      const { data: depts } = await db.from('departments').select('name');
+      const { data: pos } = await db.from('positions').select('name');
+      [admNewEmpDept, admEditEmpDept].forEach(sel => { sel.innerHTML = '<option value="" disabled selected>부서</option>'; (depts || []).forEach(d => sel.innerHTML += `<option value="${d.name}">${d.name}</option>`); });
+      [admNewEmpPosition, admEditEmpPosition].forEach(sel => { sel.innerHTML = '<option value="" disabled selected>직책</option>'; (pos || []).forEach(p => sel.innerHTML += `<option value="${p.name}">${p.name}</option>`); });
+    }
 
+    // --- 이벤트 리스너 (DOM이 로드된 후 실행) ---
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('adminLoginId').value.trim();
+        const password = document.getElementById('adminLoginPass').value.trim();
+        try { const { error } = await db.auth.signInWithPassword({ email, password }); if (error) throw error; showAdminPortal(); } catch (error) { alert(`로그인 실패: ${error.message}`); }
+      });
+      document.getElementById('employeeLoginForm').addEventListener('submit', (e) => { e.preventDefault(); alert('직원 로그인 기능은 아직 개발 중입니다.'); });
+      window.adminLogout = async () => { await db.auth.signOut(); location.reload(); };
+
+      document.getElementById('admAddEmployeeForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newEmp = { name: admNewEmpName.value, dept: admNewEmpDept.value, position: admNewEmpPosition.value };
+        try { const { error } = await db.from('employees').insert([newEmp]); if (error) throw error; e.target.reset(); renderAdmEmployees(); } catch(e) { alert('직원 추가 실패'); }
+      });
+      document.getElementById('admEditEmployeeForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const updatedInfo = { name: admEditEmpName.value, dept: admEditEmpDept.value, position: admEditEmpPosition.value };
+          try { const { error } = await db.from('employees').update(updatedInfo).eq('id', editingEmpId); if (error) throw error; alert('수정 완료'); editEmployeeFormContainer.classList.add('hidden'); renderAdmEmployees(); } catch(e) { alert('수정 실패'); }
+      });
+      document.getElementById('editCancelBtn').addEventListener('click', () => { editEmployeeFormContainer.classList.add('hidden'); });
+      document.getElementById('addDeptForm').addEventListener('submit', async (e) => {
+        e.preventDefault(); const name = newDeptName.value.trim();
+        const { error } = await db.from('departments').insert([{ name }]); if(error) alert('부서 추가 실패'); else { newDeptName.value = ''; renderSettings(); }
+      });
+      document.getElementById('addPositionForm').addEventListener('submit', async (e) => {
+        e.preventDefault(); const name = newPositionName.value.trim();
+        const { error } = await db.from('positions').insert([{ name }]); if(error) alert('직책 추가 실패'); else { newPositionName.value = ''; renderSettings(); }
+      });
     });
   </script>
 </body>
