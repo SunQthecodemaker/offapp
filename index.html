@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>연차 관리 시스템 (기능 완전 복원)</title>
+  <title>연차 관리 시스템 (DB 최종본)</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style> .hidden { display: none; } </style>
@@ -18,8 +18,8 @@
         <div id="employeeLoginContainer" class="space-y-4">
           <h2 class="text-xl font-semibold">직원 로그인</h2>
           <form id="employeeLoginForm" class="space-y-3">
-            <input type="text" placeholder="직원 이름" class="w-full border p-3 rounded" required />
-            <input type="password" placeholder="비밀번호" class="w-full border p-3 rounded" required />
+            <input type="text" id="empLoginName" placeholder="직원 이름" class="w-full border p-3 rounded" required />
+            <input type="password" id="empLoginPass" placeholder="비밀번호" class="w-full border p-3 rounded" required />
             <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">로그인</button>
           </form>
           <button type="button" onclick="showOwnerLogin()" class="text-blue-600 underline">사업주 로그인</button>
@@ -37,7 +37,7 @@
     </div>
   </div>
 
-  <!-- 직원 포털 (비어 있음) -->
+  <!-- 직원 포털 -->
   <div id="employeePortal" class="hidden"></div>
 
   <!-- 관리자 포털 -->
@@ -98,18 +98,16 @@
   </div>
 
   <script>
-    // --- 1. 전역 설정 ---
     const SUPABASE_URL = 'https://chnqtrmlglqdmzqwsazm.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobnF0cm1sZ2xxZG16cXdzYXptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODUxOTksImV4cCI6MjA3MDA2MTE5OX0.HBvXKoFAQsIjyePoMgtOpYZePoOHO9dYekcAsY1G6gQ';
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let editingEmpId = null;
 
-    // --- 2. HTML에서 직접 호출하는 함수 (onclick) ---
     function showOwnerLogin() { document.getElementById('employeeLoginContainer').classList.add('hidden'); document.getElementById('ownerLoginContainer').classList.remove('hidden'); }
     function showEmployeeLogin() { document.getElementById('ownerLoginContainer').classList.add('hidden'); document.getElementById('employeeLoginContainer').classList.remove('hidden'); }
     async function adminLogout() { await db.auth.signOut(); location.reload(); }
     async function deleteEmployee(id) {
-        if (!confirm(`ID ${id} 직원을 삭제하시겠습니까?`)) return;
+        if (!confirm(`ID ${id} 직원을 정말 삭제하시겠습니까?`)) return;
         try { const { error } = await db.from('employees').delete().eq('id', id); if (error) throw error; await renderAdmEmployees(); } catch (e) { alert('직원 삭제 실패'); }
     }
     async function deleteDept(id) {
@@ -132,7 +130,6 @@
         } catch(e) { alert('직원 정보 로딩 실패'); }
     }
     
-    // --- 3. 데이터 렌더링 함수 ---
     async function renderAdmEmployees() {
       try{
         const { data, error } = await db.from('employees').select('*').order('id');
@@ -164,7 +161,6 @@
       } catch(e) { alert('부서/직책 목록 로딩 실패'); }
     }
 
-    // --- 4. 앱 실행 로직 (페이지 로드 후 실행) ---
     document.addEventListener('DOMContentLoaded', () => {
       const loginSection = document.getElementById('loginSection');
       const adminPortal = document.getElementById('adminPortal');
@@ -178,6 +174,7 @@
             else { tab.classList.remove('bg-blue-500', 'text-white'); tab.classList.add('bg-gray-200'); }
         });
       };
+      
       const initializeAdminPortal = async () => {
         showAdminSection('employees');
         await renderAdmEmployees();
@@ -217,14 +214,4 @@
     });
   </script>
 </body>
-</html>```
-
-### **부탁드립니다**
-
-1.  이 코드를 `index.html`에 덮어쓰고 **저장**해주세요.
-2.  GitHub에 **Commit & Push** 하세요.
-3.  1분 후, 배포된 앱에서 **`Ctrl`+`Shift`+`R`로 강력 새로고침**을 해주세요.
-
-**이제 관리자로 로그인하시면, 당신이 원했던 모든 관리자 기능이 정상적으로 작동할 것입니다.** 이번에는 제가 모든 것을 걸고, 반드시 해결될 것이라고 말씀드립니다.
-
-결과를 알려주세요.
+</html>
