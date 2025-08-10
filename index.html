@@ -3,267 +3,357 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>연차 관리 시스템 (최종 비동기 해결)</title>
+    <title>연차 관리 시스템 (최종 해결 버전)</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style> .hidden { display: none; } </style>
+    <style>
+        .hidden { display: none; }
+        .tab-btn.active { background-color: #3b82f6; color: white; }
+        .tab-btn:not(.active) { background-color: #e5e7eb; }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
 
-    <!-- 로그인 화면 -->
-    <div id="loginSection" class="flex flex-col items-center justify-center min-h-screen">
-        <div class="max-w-xl w-full bg-white rounded shadow p-6 text-center">
-            <h1 class="text-3xl font-bold mb-6">연차 관리 시스템</h1>
-            <div id="employeeLoginContainer" class="space-y-4">
-                <h2 class="text-xl font-semibold">직원 로그인</h2>
-                <form id="employeeLoginForm" class="space-y-3">
-                    <input type="text" id="empLoginName" placeholder="직원 이름" class="w-full border p-3 rounded" required />
-                    <input type="password" id="empLoginPass" placeholder="비밀번호" class="w-full border p-3 rounded" required />
-                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">로그인</button>
-                </form>
-                <button type="button" id="goToOwnerLoginBtn" class="text-blue-600 underline">사업주 로그인</button>
-            </div>
-            <div id="ownerLoginContainer" class="hidden space-y-4">
-                <h2 class="text-xl font-semibold">사업주 로그인</h2>
-                <form id="adminLoginForm" class="space-y-3">
-                    <input type="email" id="adminLoginId" placeholder="사업주 이메일" class="w-full border p-3 rounded" required />
-                    <input type="password" id="adminLoginPass" placeholder="비밀번호" class="w-full border p-3 rounded" required />
-                    <button type="submit" class="w-full bg-green-600 text-white py-2 rounded">로그인</button>
-                </form>
-                <button type="button" id="goToEmployeeLoginBtn" class="text-blue-600 underline">직원 로그인으로</button>
-            </div>
-        </div>
-    </div>
+    <!-- App Container -->
+    <div id="app">
 
-    <!-- 관리자 포털 (UI 완전 복원) -->
-    <div id="adminPortal" class="hidden">
-        <div class="max-w-6xl mx-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h1 class="text-3xl font-bold">연차 관리 (관리자)</h1>
-                <button id="adminLogoutBtn" class="px-3 py-1 text-sm bg-gray-300 rounded">로그아웃</button>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mb-6 text-sm">
-                <div class="bg-yellow-100 p-4 rounded"><p>승인 대기</p><p class="text-xl font-bold" id="admSummaryPending">0</p></div>
-                <div class="bg-green-100 p-4 rounded"><p>승인 완료</p><p class="text-xl font-bold" id="admSummaryApproved">0</p></div>
-                <div class="bg-gray-200 p-4 rounded"><p>사용 완료</p><p class="text-xl font-bold" id="admSummaryUsed">0</p></div>
-                <div class="bg-red-100 p-4 rounded"><p>반려</p><p class="text-xl font-bold" id="admSummaryRejected">0</p></div>
-            </div>
-            <div class="flex gap-4 mb-4" id="adminTabs">
-                <button data-target="admLeaveListSection" class="tab-btn bg-blue-500 text-white px-3 py-2 rounded">연차 목록</button>
-                <button data-target="admEmployeeSection" class="tab-btn bg-gray-200 px-3 py-2 rounded">직원 관리</button>
-                <button data-target="admSettingsSection" class="tab-btn bg-gray-200 px-3 py-2 rounded">사업장 설정</button>
-            </div>
-            
-            <!-- 연차 목록 -->
-            <div id="admLeaveListSection" class="admin-section">
-                 <div class="bg-white shadow rounded overflow-x-auto p-4">
-                    <table class="min-w-full"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">직원</th><th class="p-2 text-left text-xs">신청날짜</th><th class="p-2 text-left text-xs">상태</th><th class="p-2 text-center text-xs">처리</th></tr></thead><tbody id="admRequestsTable"></tbody></table>
-                </div>
-            </div>
-            <!-- 직원 관리 -->
-            <div id="admEmployeeSection" class="admin-section hidden">
-                <div class="bg-white shadow rounded p-4">
-                    <h2 class="text-lg font-semibold mb-3">직원 목록</h2>
-                    <table class="min-w-full mb-4"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">이름</th><th class="p-2 text-left text-xs">입사일</th><th class="p-2 text-left text-xs">비밀번호</th><th class="p-2 text-center text-xs">삭제</th></tr></thead><tbody id="admEmployeesTable"></tbody></table>
-                    <h3 class="text-md font-semibold mb-2">직원 추가</h3>
-                    <form id="admAddEmployeeForm" class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
-                        <input id="admNewEmpName" type="text" placeholder="이름" class="p-2 border rounded" required /><input id="admNewEmpEntryDate" type="date" class="p-2 border rounded" required /><input id="admNewEmpPassword" type="password" placeholder="로그인 비번" class="p-2 border rounded" required />
-                        <div class="md:col-span-3 text-right"><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></div>
+        <!-- 로그인 화면 -->
+        <div id="login-screen" class="page-section flex flex-col items-center justify-center min-h-screen">
+            <div class="max-w-xl w-full bg-white rounded shadow p-6 text-center">
+                <h1 class="text-3xl font-bold mb-6">연차 관리 시스템</h1>
+                <div id="employeeLoginContainer" class="space-y-4">
+                    <h2 class="text-xl font-semibold">직원 로그인</h2>
+                    <form id="employeeLoginForm" class="space-y-3">
+                        <input type="text" id="empLoginName" placeholder="직원 이름" class="w-full border p-3 rounded" required />
+                        <input type="password" id="empLoginPass" placeholder="비밀번호" class="w-full border p-3 rounded" required />
+                        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">로그인</button>
                     </form>
+                    <button type="button" id="goToOwnerLoginBtn" class="text-blue-600 underline">사업주 로그인</button>
                 </div>
-            </div>
-            <!-- 사업장 설정 -->
-            <div id="admSettingsSection" class="admin-section hidden">
-                <!-- 설정 UI -->
+                <div id="ownerLoginContainer" class="hidden space-y-4">
+                    <h2 class="text-xl font-semibold">사업주 로그인</h2>
+                    <form id="adminLoginForm" class="space-y-3">
+                        <input type="email" id="adminLoginId" placeholder="사업주 이메일" class="w-full border p-3 rounded" required />
+                        <input type="password" id="adminLoginPass" placeholder="비밀번호" class="w-full border p-3 rounded" required />
+                        <button type="submit" class="w-full bg-green-600 text-white py-2 rounded">로그인</button>
+                    </form>
+                    <button type="button" id="goToEmployeeLoginBtn" class="text-blue-600 underline">직원 로그인으로</button>
+                </div>
             </div>
         </div>
+
+        <!-- 관리자 포털 -->
+        <div id="admin-portal" class="page-section hidden">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="text-3xl font-bold">연차 관리 (관리자)</h1>
+                    <button id="adminLogoutBtn" class="px-3 py-1 text-sm bg-gray-300 rounded">로그아웃</button>
+                </div>
+                <div id="admin-summary" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mb-6 text-sm"></div>
+                <div id="admin-tabs" class="flex gap-4 mb-4"></div>
+                <div id="admin-content" class="bg-white shadow rounded p-4"></div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
     <script>
     // =================================================================
-    // 1. 설정 및 전역 변수
+    // 1. 설정 및 초기화
     // =================================================================
-    const SUPABASE_URL = 'https://chnqtrmlglqdmzqwsazm.supabase.co'; // ◀◀◀ 여기에 Supabase URL을 입력하세요.
+    const SUPABASE_URL = 'Yhttps://chnqtrmlglqdmzqwsazm.supabase.co'; // ◀◀◀ 여기에 Supabase URL을 입력하세요.
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobnF0cm1sZ2xxZG16cXdzYXptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODUxOTksImV4cCI6MjA3MDA2MTE5OX0.HBvXKoFAQsIjyePoMgtOpYZePoOHO9dYekcAsY1G6gQ'; // ◀◀◀ 여기에 Supabase Anon Key를 입력하세요.
     
     let db;
-    
-    // =================================================================
-    // 2. 유틸리티 함수
-    // =================================================================
-    const _ = (selector) => document.querySelector(selector);
-    const _all = (selector) => document.querySelectorAll(selector);
-    
-    // =================================================================
-    // 3. 핵심 기능 함수 (UI 렌더링, 데이터 처리)
-    // =================================================================
 
-    // --- 화면 전환 ---
-    const showScreen = (screen) => {
-        _all('.page-section').forEach(s => s.classList.add('hidden'));
-        if (_(screen)) _(screen).classList.remove('hidden');
+    // =================================================================
+    // 2. 중앙 상태 관리 (State Management)
+    // =================================================================
+    const state = {
+        currentUser: null, // null | {id, name, ...}
+        userRole: 'none', // 'none', 'employee', 'admin'
+        admin: {
+            activeTab: 'leaveList', // 'leaveList', 'employees', 'settings'
+            summary: { pending: 0, approved: 0, used: 0, rejected: 0 },
+            leaveRequests: [],
+            employees: [],
+        }
     };
 
-    // --- 관리자 포털 ---
-    async function initializeAdminPortal() {
-        console.log("관리자 포털 초기화를 시작합니다.");
-        await updateAdminSummary();
-        await renderAdmRequests();
-        await renderAdmEmployees(); // 초기 로드 시 직원 목록도 렌더링
-        showScreen('#adminPortal');
+    // =================================================================
+    // 3. UI 렌더링 함수 (Render Functions)
+    // =================================================================
+    
+    /**
+     * 앱의 전체 UI를 현재 state에 맞게 렌더링하는 메인 함수
+     */
+    function render() {
+        console.log("Rendering UI based on state:", state);
+        const { userRole } = state;
+        _all('.page-section').forEach(el => el.classList.add('hidden'));
+
+        if (userRole === 'admin') {
+            _('#admin-portal').classList.remove('hidden');
+            renderAdminPortal();
+        } else if (userRole === 'employee') {
+            // 직원 포털 UI 렌더링 (필요시 구현)
+        } else {
+            _('#login-screen').classList.remove('hidden');
+        }
     }
 
-    async function updateAdminSummary() {
-        const { data, error } = await db.from('leave_requests').select('status, dates');
-        if (error) return console.error("요약 로딩 실패:", error);
-        
-        let counts = { pending: 0, approved: 0, used: 0, rejected: 0 };
-        const today = dayjs();
-        (data || []).forEach(req => {
-            if (req.status === 'pending') counts.pending++;
-            else if (req.status === 'rejected') counts.rejected++;
-            else if (req.status === 'approved') {
-                req.dates.some(d => dayjs(d).isBefore(today, 'day')) ? counts.used++ : counts.approved++;
-            }
-        });
-        _('#admSummaryPending').textContent = counts.pending;
-        _('#admSummaryApproved').textContent = counts.approved;
-        _('#admSummaryUsed').textContent = counts.used;
-        _('#admSummaryRejected').textContent = counts.rejected;
+    /**
+     * 관리자 포털 전체를 렌더링
+     */
+    function renderAdminPortal() {
+        renderAdminSummary();
+        renderAdminTabs();
+        renderAdminContent();
     }
 
-    async function renderAdmRequests() {
-        const { data, error } = await db.from('leave_requests').select('*').order('id', { ascending: false });
-        if (error) return console.error("연차 요청 로딩 실패:", error);
-        const tableBody = _('#admRequestsTable');
-        tableBody.innerHTML = (data || []).map(req => {
+    /**
+     * 관리자 요약 카드 렌더링
+     */
+    function renderAdminSummary() {
+        const { summary } = state.admin;
+        const container = _('#admin-summary');
+        container.innerHTML = `
+            <div class="bg-yellow-100 p-4 rounded"><p>승인 대기</p><p class="text-xl font-bold">${summary.pending}건</p></div>
+            <div class="bg-green-100 p-4 rounded"><p>승인 완료</p><p class="text-xl font-bold">${summary.approved}건</p></div>
+            <div class="bg-gray-200 p-4 rounded"><p>사용 완료</p><p class="text-xl font-bold">${summary.used}건</p></div>
+            <div class="bg-red-100 p-4 rounded"><p>반려</p><p class="text-xl font-bold">${summary.rejected}건</p></div>
+        `;
+    }
+
+    /**
+     * 관리자 탭 버튼 렌더링
+     */
+    function renderAdminTabs() {
+        const { activeTab } = state.admin;
+        const tabs = [
+            { id: 'leaveList', text: '연차 목록' },
+            { id: 'employees', text: '직원 관리' },
+            { id: 'settings', text: '사업장 설정' },
+        ];
+        const container = _('#admin-tabs');
+        container.innerHTML = tabs.map(tab => `
+            <button data-tab="${tab.id}" class="tab-btn px-3 py-2 rounded ${tab.id === activeTab ? 'active' : ''}">${tab.text}</button>
+        `).join('');
+    }
+
+    /**
+     * 관리자 탭에 맞는 컨텐츠 렌더링
+     */
+    function renderAdminContent() {
+        const { activeTab } = state.admin;
+        const container = _('#admin-content');
+        if (activeTab === 'leaveList') {
+            container.innerHTML = getLeaveListHTML();
+        } else if (activeTab === 'employees') {
+            container.innerHTML = getEmployeesHTML();
+        } else {
+            container.innerHTML = `<p>${activeTab} 탭의 내용입니다.</p>`;
+        }
+    }
+    
+    function getLeaveListHTML() {
+        const { leaveRequests } = state.admin;
+        const rows = leaveRequests.map(req => {
             const actions = req.status === 'pending'
-                ? `<button class="text-green-600" onclick="updateRequestStatus(${req.id}, 'approved')">승인</button>
-                   <button class="text-red-600 ml-2" onclick="updateRequestStatus(${req.id}, 'rejected')">반려</button>`
+                ? `<button class="text-green-600" onclick="handleUpdateRequestStatus(${req.id}, 'approved')">승인</button>
+                   <button class="text-red-600 ml-2" onclick="handleUpdateRequestStatus(${req.id}, 'rejected')">반려</button>`
                 : '-';
             return `<tr><td class="p-2">${req.employee_name}</td><td class="p-2">${req.dates.join(', ')}</td><td class="p-2">${req.status}</td><td class="p-2 text-center">${actions}</td></tr>`;
         }).join('');
+        return `<table class="min-w-full"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">직원</th><th class="p-2 text-left text-xs">신청날짜</th><th class="p-2 text-left text-xs">상태</th><th class="p-2 text-center text-xs">처리</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
-    async function renderAdmEmployees() {
-        const { data, error } = await db.from('employees').select('*').order('id');
-        if (error) return console.error("직원 목록 로딩 실패:", error);
-        const tableBody = _('#admEmployeesTable');
-        tableBody.innerHTML = (data || []).map(emp => 
-            `<tr><td class="p-2">${emp.name}</td><td class="p-2">${emp.entry_date}</td><td class="p-2">${emp.password}</td><td class="p-2 text-center"><button class="text-red-600" onclick="deleteEmployee(${emp.id})">삭제</button></td></tr>`
+    function getEmployeesHTML() {
+        const { employees } = state.admin;
+        const rows = employees.map(emp => 
+            `<tr><td class="p-2">${emp.name}</td><td class="p-2">${emp.entry_date}</td><td class="p-2">${emp.password}</td><td class="p-2 text-center"><button class="text-red-600" onclick="handleDeleteEmployee(${emp.id})">삭제</button></td></tr>`
         ).join('');
+        return `
+            <h2 class="text-lg font-semibold mb-3">직원 목록</h2>
+            <table class="min-w-full mb-4"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">이름</th><th class="p-2 text-left text-xs">입사일</th><th class="p-2 text-left text-xs">비밀번호</th><th class="p-2 text-center text-xs">삭제</th></tr></thead><tbody>${rows}</tbody></table>
+            <h3 class="text-md font-semibold mb-2">직원 추가</h3>
+            <form id="admAddEmployeeForm" class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
+                <input id="admNewEmpName" type="text" placeholder="이름" class="p-2 border rounded" required />
+                <input id="admNewEmpEntryDate" type="date" class="p-2 border rounded" required />
+                <input id="admNewEmpPassword" type="password" placeholder="로그인 비번" class="p-2 border rounded" required />
+                <div class="md:col-span-3 text-right"><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></div>
+            </form>
+        `;
     }
 
-    // --- 전역에서 호출될 함수들 (onclick) ---
-    window.updateRequestStatus = async (id, status) => {
+    // =================================================================
+    // 4. 데이터 로딩 및 처리 함수 (API Calls)
+    // =================================================================
+    
+    /**
+     * 관리자 포털에 필요한 모든 데이터를 비동기 병렬로 로드
+     */
+    async function loadAdminData() {
+        console.log("관리자 데이터 로딩 시작...");
+        const [requestsRes, employeesRes] = await Promise.all([
+            db.from('leave_requests').select('*').order('id', { ascending: false }),
+            db.from('employees').select('*').order('id')
+        ]);
+        
+        if (requestsRes.error) throw new Error("연차 요청 로딩 실패: " + requestsRes.error.message);
+        if (employeesRes.error) throw new Error("직원 목록 로딩 실패: " + employeesRes.error.message);
+        
+        state.admin.leaveRequests = requestsRes.data || [];
+        state.admin.employees = employeesRes.data || [];
+
+        // 요약 정보 계산
+        let summary = { pending: 0, approved: 0, used: 0, rejected: 0 };
+        const today = dayjs();
+        state.admin.leaveRequests.forEach(req => {
+            if (req.status === 'pending') summary.pending++;
+            else if (req.status === 'rejected') summary.rejected++;
+            else if (req.status === 'approved') {
+                req.dates.some(d => dayjs(d).isBefore(today, 'day')) ? summary.used++ : summary.approved++;
+            }
+        });
+        state.admin.summary = summary;
+        console.log("관리자 데이터 로딩 및 계산 완료.");
+    }
+    
+    // =================================================================
+    // 5. 이벤트 핸들러 (Event Handlers)
+    // =================================================================
+    
+    // --- 로그인/로그아웃 핸들러 ---
+    async function handleEmployeeLogin(e) { /* ... */ }
+    async function handleAdminLogin(e) { /* ... */ }
+    async function handleLogout() {
+        if(state.userRole === 'admin') await db.auth.signOut();
+        else sessionStorage.removeItem('loggedInEmployee');
+        state.currentUser = null;
+        state.userRole = 'none';
+        render();
+    }
+
+    // --- 관리자 포털 핸들러 ---
+    function handleTabClick(e) {
+        if (e.target.matches('.tab-btn')) {
+            const tabId = e.target.dataset.tab;
+            console.log(`Tab clicked: ${tabId}`);
+            state.admin.activeTab = tabId;
+            renderAdminPortal(); // 탭 내용만 다시 렌더링
+        }
+    }
+
+    async function handleAddEmployee(e) {
+        e.preventDefault();
+        const newEmp = { name: _('#admNewEmpName').value, entry_date: _('#admNewEmpEntryDate').value, password: _('#admNewEmpPassword').value };
+        const { error } = await db.from('employees').insert(newEmp);
+        if (error) return alert(`직원 추가 실패: ${error.message}`);
+        e.target.reset();
+        await loadAdminData();
+        renderAdminPortal();
+    }
+
+    // onclick에서 호출되도록 전역에 노출
+    window.handleUpdateRequestStatus = async (id, status) => {
         if (!confirm(`요청을 '${status}' 상태로 변경하시겠습니까?`)) return;
         const { error } = await db.from('leave_requests').update({ status }).eq('id', id);
         if (error) return alert(`상태 변경 실패: ${error.message}`);
-        await updateAdminSummary();
-        await renderAdmRequests();
+        await loadAdminData();
+        renderAdminPortal();
     };
 
-    window.deleteEmployee = async (id) => {
+    window.handleDeleteEmployee = async (id) => {
         if (!confirm("정말로 직원을 삭제하시겠습니까?")) return;
         const { error } = await db.from('employees').delete().eq('id', id);
         if (error) return alert(`직원 삭제 실패: ${error.message}`);
-        await renderAdmEmployees();
+        await loadAdminData();
+        renderAdminPortal();
     };
-
-
+    
     // =================================================================
-    // 4. 앱 실행 및 이벤트 리스너
+    // 6. 앱 초기화 및 메인 실행 로직
     // =================================================================
-    document.addEventListener('DOMContentLoaded', async () => {
-        console.log("DOM 로드 완료. 앱 초기화를 시작합니다.");
+    
+    async function main() {
+        console.log("앱 초기화 시작");
+        // Supabase 클라이언트 초기화
+        db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("Supabase 클라이언트 초기화 완료");
+
+        // --- 정적 이벤트 리스너 등록 ---
+        _('#goToOwnerLoginBtn').addEventListener('click', () => { hide('#employeeLoginContainer'); show('#ownerLoginContainer'); });
+        _('#goToEmployeeLoginBtn').addEventListener('click', () => { hide('#ownerLoginContainer'); show('#employeeLoginContainer'); });
+        _('#adminLogoutBtn').addEventListener('click', handleLogout);
+        _('#admin-tabs').addEventListener('click', handleTabClick);
+        // 직원 추가 폼은 동적으로 렌더링되므로, 상위 요소에 이벤트 위임
+        _('#admin-portal').addEventListener('submit', (e) => {
+            if (e.target.id === 'admAddEmployeeForm') {
+                handleAddEmployee(e);
+            }
+        });
         
-        // 페이지 섹션에 클래스 추가 (스크린 전환용)
-        _('#loginSection').classList.add('page-section');
-        _('#adminPortal').classList.add('page-section');
-        
+        // --- 폼 제출 리스너 ---
+        _('#employeeLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = _('#empLoginName').value, pass = _('#empLoginPass').value;
+            const { data, error } = await db.from('employees').select('*').eq('name', name).eq('password', pass).single();
+            if (error || !data) return alert('로그인 실패');
+            sessionStorage.setItem('loggedInUser', JSON.stringify({ ...data, role: 'employee' }));
+            init();
+        });
+
+        _('#adminLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = _('#adminLoginId').value, password = _('#adminLoginPass').value;
+            const { data, error } = await db.auth.signInWithPassword({ email, password });
+            if (error) return alert(`로그인 실패: ${error.message}`);
+            // 로그인 성공 시 세션은 자동으로 저장됨
+            init();
+        });
+
+        await init();
+    }
+    
+    async function init() {
         try {
-            db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log("Supabase 클라이언트 초기화 완료.");
-
-            // --- 정적 이벤트 리스너 ---
-            _('#goToOwnerLoginBtn').addEventListener('click', () => { hide('#employeeLoginContainer'); show('#ownerLoginContainer'); });
-            _('#goToEmployeeLoginBtn').addEventListener('click', () => { hide('#ownerLoginContainer'); show('#employeeLoginContainer'); });
-            _('#adminLogoutBtn').addEventListener('click', async () => { await db.auth.signOut(); location.reload(); });
-            
-            // --- 폼 제출 리스너 ---
-            _('#employeeLoginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const name = _('#empLoginName').value;
-                const pass = _('#empLoginPass').value;
-                const { data, error } = await db.from('employees').select('*').eq('name', name).eq('password', pass).single();
-                if (error || !data) return alert('로그인 실패');
-                sessionStorage.setItem('loggedInEmployee', JSON.stringify(data));
-                location.reload();
-            });
-
-            _('#adminLoginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = _('#adminLoginId').value;
-                const password = _('#adminLoginPass').value;
-                const { error } = await db.auth.signInWithPassword({ email, password });
-                if (error) return alert(`로그인 실패: ${error.message}`);
-                location.reload();
-            });
-
-            _('#admAddEmployeeForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const newEmp = { name: _('#admNewEmpName').value, entry_date: _('#admNewEmpEntryDate').value, password: _('#admNewEmpPassword').value };
-                const { error } = await db.from('employees').insert(newEmp);
-                if (error) return alert(`직원 추가 실패: ${error.message}`);
-                e.target.reset();
-                await renderAdmEmployees();
-            });
-
-            // --- 탭 클릭 이벤트 위임 ---
-            _('#adminTabs').addEventListener('click', async (e) => {
-                if (e.target.tagName === 'BUTTON') {
-                    const targetSectionId = e.target.dataset.target;
-                    
-                    // 모든 섹션 숨기기
-                    _all('.admin-section').forEach(sec => sec.classList.add('hidden'));
-                    // 클릭된 탭의 타겟 섹션만 보여주기
-                    if (_('#' + targetSectionId)) _('#' + targetSectionId).classList.remove('hidden');
-
-                    // 모든 탭 스타일 초기화
-                    _all('#adminTabs button').forEach(btn => {
-                        btn.classList.remove('bg-blue-500', 'text-white');
-                        btn.classList.add('bg-gray-200');
-                    });
-                    // 클릭된 탭에 활성 스타일 적용
-                    e.target.classList.add('bg-blue-500', 'text-white');
-                    e.target.classList.remove('bg-gray-200');
-
-                    // 해당 탭의 데이터 리프레시
-                    if (targetSectionId === 'admLeaveListSection') await renderAdmRequests();
-                    if (targetSectionId === 'admEmployeeSection') await renderAdmEmployees();
-                }
-            });
-
-            // --- 초기 세션 확인 및 라우팅 ---
+            console.log("세션 확인 및 초기 라우팅 시작");
             const { data: { session } } = await db.auth.getSession();
-            const loggedInEmployee = sessionStorage.getItem('loggedInEmployee');
+            const employeeSession = sessionStorage.getItem('loggedInUser');
 
             if (session) {
-                await initializeAdminPortal();
-            } else if (loggedInEmployee) {
-                // await initializeEmployeePortal(); // 직원 포털 구현 시 활성화
+                console.log("관리자 세션 발견");
+                state.currentUser = session.user;
+                state.userRole = 'admin';
+                await loadAdminData();
+            } else if (employeeSession) {
+                console.log("직원 세션 발견");
+                const userData = JSON.parse(employeeSession);
+                state.currentUser = userData;
+                state.userRole = 'employee';
+                // await loadEmployeeData(); // 직원 데이터 로딩 함수 (필요시 구현)
             } else {
-                showScreen('#loginSection');
+                console.log("활성 세션 없음. 로그인 화면으로 이동.");
+                state.userRole = 'none';
             }
-
+            render();
         } catch (e) {
-            console.error("앱 초기화 중 심각한 오류:", e);
-            alert("페이지 로드 중 오류가 발생했습니다. Supabase URL/Key를 확인해주세요.");
-            showScreen('#loginSection');
+            console.error("초기화 중 심각한 오류:", e);
+            alert("페이지 로드 중 오류가 발생했습니다: " + e.message);
+            state.userRole = 'none';
+            render();
         }
-    });
+    }
+    
+    // 유틸리티 함수 _ 와 _all 전역 선언
+    const _ = (selector) => document.querySelector(selector);
+    const _all = (selector) => document.querySelectorAll(selector);
+
+    // DOMContentLoaded 이벤트 발생 시 main 함수 실행
+    document.addEventListener('DOMContentLoaded', main);
+
     </script>
 </body>
 </html>
