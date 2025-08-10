@@ -99,7 +99,6 @@
     function showEmployeeLogin() { document.getElementById('ownerLoginContainer').classList.add('hidden'); document.getElementById('employeeLoginContainer').classList.remove('hidden'); }
     async function adminLogout() { await db.auth.signOut(); location.reload(); }
     function employeeLogout() { sessionStorage.removeItem('loggedInEmployee'); currentEmployee = null; location.reload(); }
-    
     async function deleteEmployee(id) { if (!confirm(`직원을 삭제하시겠습니까?`)) return; try { const { error } = await db.from('employees').delete().eq('id', id); if (error) throw error; await renderAdmEmployees(); } catch (e) { alert('직원 삭제 실패'); }}
     async function deleteDept(id) { if (!confirm(`삭제하시겠습니까?`)) return; try { const { error } = await db.from('departments').delete().eq('id', id); if(error) throw error; await renderSettings(); } catch (e) { alert('부서 삭제 실패'); }}
     async function deletePosition(id) { if (!confirm(`삭제하시겠습니까?`)) return; try { const { error } = await db.from('positions').delete().eq('id', id); if(error) throw error; await renderSettings(); } catch (e) { alert('직책 삭제 실패'); }}
@@ -111,26 +110,7 @@
     async function renderSettings() { try { const { data: depts, error: dErr } = await db.from('departments').select('*'); if (dErr) throw dErr; const deptList = document.getElementById('deptList'); deptList.innerHTML = ''; (depts||[]).forEach(d => { deptList.innerHTML += `<tr><td class="p-2">${d.name}</td><td class="p-2 text-right"><button class="text-red-600" onclick="deleteDept(${d.id})">삭제</button></td></tr>`; }); const { data: pos, error: pErr } = await db.from('positions').select('*'); if (pErr) throw pErr; const positionList = document.getElementById('positionList'); positionList.innerHTML = ''; (pos||[]).forEach(p => { positionList.innerHTML += `<tr><td class="p-2">${p.name}</td><td class="p-2 text-right"><button class="text-red-600" onclick="deletePosition(${p.id})">삭제</button></td></tr>`; }); await populateDeptPositionSelects(); } catch(e) { alert('설정 정보 로딩 실패'); }}
     async function populateDeptPositionSelects() { try { const { data: depts } = await db.from('departments').select('name'); const { data: pos } = await db.from('positions').select('name'); [admNewEmpDept, admEditEmpDept].forEach(sel => { sel.innerHTML = '<option value="" disabled selected>부서</option>'; (depts || []).forEach(d => sel.innerHTML += `<option value="${d.name}">${d.name}</option>`); }); [admNewEmpPosition, admEditEmpPosition].forEach(sel => { sel.innerHTML = '<option value="" disabled selected>직책</option>'; (pos || []).forEach(p => sel.innerHTML += `<option value="${p.name}">${p.name}</option>`); }); } catch(e) { alert('부서/직책 로딩 실패'); }}
     async function renderAdmRequestTable() { try { const { data, error } = await db.from('leave_requests').select('*').order('id', { ascending: false }); if (error) throw error; admRequestsTable.innerHTML = ''; (data || []).forEach(req => { let actions = '-'; if (req.status === 'pending') actions = `<button class="text-green-600 mr-2" onclick="updateRequestStatus(${req.id}, 'approved')">승인</button><button class="text-red-600" onclick="updateRequestStatus(${req.id}, 'rejected')">반려</button>`; admRequestsTable.innerHTML += `<tr><td class="p-2 text-sm">${req.employeeName}</td><td class="p-2 text-sm">${(req.dates || []).join(', ')}</td><td class="p-2 text-sm">${req.reason}</td><td class="p-2 text-sm">${req.status}</td><td class="p-2 text-center">${actions}</td></tr>`; }); } catch(e) { alert(`연차 목록 로딩 실패: ${e.message}`); }}
-    async function updateAdminSummary() {
-      try {
-        const { data, error } = await db.from('leave_requests').select('status,dates'); if (error) throw error;
-        let pending = 0, approved = 0, used = 0, rejected = 0;
-        const today = dayjs();
-        (data || []).forEach(req => {
-            if (req.status === 'pending') pending++;
-            else if (req.status === 'approved') {
-                const isUsed = req.dates.some(d => dayjs(d).isBefore(today, 'day'));
-                if (isUsed) used++; else approved++;
-            }
-            else if (req.status === 'rejected') rejected++;
-        });
-        document.getElementById('admSummaryPending').textContent = `${pending}건`;
-        document.getElementById('admSummaryApproved').textContent = `${approved}건`;
-        document.getElementById('admSummaryUsed').textContent = `${used}건`;
-        document.getElementById('admSummaryRejected').textContent = `${rejected}건`;
-      } catch(e) { console.error("요약 업데이트 실패", e); }
-    }
-    
+    async function updateAdminSummary() { try { const { data, error } = await db.from('leave_requests').select('status,dates'); if (error) throw error; let pending = 0, approved = 0, used = 0, rejected = 0; const today = dayjs(); (data || []).forEach(req => { if (req.status === 'pending') pending++; else if (req.status === 'approved') { const isUsed = req.dates.some(d => dayjs(d).isBefore(today, 'day')); if (isUsed) used++; else approved++; } else if (req.status === 'rejected') rejected++; }); document.getElementById('admSummaryPending').textContent = `${pending}건`; document.getElementById('admSummaryApproved').textContent = `${approved}건`; document.getElementById('admSummaryUsed').textContent = `${used}건`; document.getElementById('admSummaryRejected').textContent = `${rejected}건`; } catch(e) { console.error("요약 업데이트 실패", e); }}
     async function refreshEmployeeData() {
         if(!currentEmployee) return;
         try {
