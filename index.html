@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>연차 관리 시스템 (DB 완전 복원)</title>
+  <title>연차 관리 시스템 (완전 복원)</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -40,7 +40,7 @@
 
   <!-- 직원 포털 -->
   <div id="employeePortal" class="hidden">
-      <div class="max-w-5xl mx-auto bg-white shadow rounded p-6">
+    <div class="max-w-5xl mx-auto bg-white shadow rounded p-6">
         <div class="flex justify-between items-center mb-4"><h1 class="text-2xl font-bold">내 연차 신청</h1><div><span id="employeeInfo" class="text-sm text-gray-600"></span><button onclick="employeeLogout()" class="ml-2 px-3 py-1 text-sm bg-gray-300 rounded">로그아웃</button></div></div>
         <div id="empMainSection">
           <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center mb-6 text-sm">
@@ -53,20 +53,20 @@
           <div id="empCalendar"></div>
           <div class="text-right mt-4"><button id="empApplyBtn" class="bg-blue-600 text-white px-4 py-2 rounded">연차 신청</button></div>
         </div>
-      </div>
-      <div id="empFormContainer" class="max-w-2xl mx-auto mt-8 bg-white shadow rounded p-6 hidden">
-        <h2 class="text-xl font-semibold mb-4">연차 신청서</h2>
-        <form id="empLeaveForm" class="space-y-4">
-          <div><label class="block font-medium">선택 날짜 (<span id="empSelectedCount">0</span>일)</label><ul id="empSelectedDatesList" class="list-disc list-inside"></ul></div>
-          <div><label class="block font-medium mb-1">사유</label><textarea id="empReason" class="w-full p-2 border rounded" rows="3" required></textarea></div>
-          <div class="flex justify-end gap-2"><button type="reset" id="empCancelBtn" class="bg-gray-400 text-white px-4 py-2 rounded">취소</button><button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">제출</button></div>
-        </form>
-      </div>
+    </div>
+    <div id="empFormContainer" class="max-w-2xl mx-auto mt-8 bg-white shadow rounded p-6 hidden">
+      <h2 class="text-xl font-semibold mb-4">연차 신청서</h2>
+      <form id="empLeaveForm" class="space-y-4">
+        <div><label class="block font-medium">선택 날짜 (<span id="empSelectedCount">0</span>일)</label><ul id="empSelectedDatesList" class="list-disc list-inside"></ul></div>
+        <div><label class="block font-medium mb-1">사유</label><textarea id="empReason" class="w-full p-2 border rounded" rows="3" required></textarea></div>
+        <div class="flex justify-end gap-2"><button type="reset" id="empCancelBtn" class="bg-gray-400 text-white px-4 py-2 rounded">취소</button><button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">제출</button></div>
+      </form>
+    </div>
   </div>
 
   <!-- 관리자 포털 -->
   <div id="adminPortal" class="hidden">
-      <div class="max-w-6xl mx-auto">
+    <div class="max-w-6xl mx-auto">
       <div class="flex justify-between items-center mb-4"><h1 class="text-3xl font-bold">연차 관리 (관리자)</h1><button onclick="adminLogout()" class="px-3 py-1 text-sm bg-gray-300 rounded">로그아웃</button></div>
       <div class="flex gap-4 mb-4"><button id="tabList" class="tab-btn bg-blue-500 text-white px-3 py-2 rounded">연차 목록</button><button id="tabEmployees" class="tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">직원 관리</button><button id="tabSettings" class="tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">사업장 설정</button></div>
       <div id="admLeaveListSection" class="section"><div class="bg-white shadow rounded overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">직원</th><th class="p-2 text-left text-xs">신청 날짜</th><th class="p-2 text-left text-xs">사유</th><th class="p-2 text-left text-xs">상태</th><th class="p-2 text-center text-xs">처리</th></tr></thead><tbody id="admRequestsTable"></tbody></table></div></div>
@@ -78,13 +78,13 @@
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <script>
-    // --- 1. 전역 설정 ---
     const SUPABASE_URL = 'https://chnqtrmlglqdmzqwsazm.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobnF0cm1sZ2xxZG16cXdzYXptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODUxOTksImV4cCI6MjA3MDA2MTE5OX0.HBvXKoFAQsIjyePoMgtOpYZePoOHO9dYekcAsY1G6gQ';
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
     let editingEmpId = null, currentEmployee = null, empCalendar, selectedDates = new Set();
 
-    // --- 2. HTML onclick 함수 ---
+    // --- 화면 전환 및 공용 함수 ---
     function showOwnerLogin() { document.getElementById('employeeLoginContainer').classList.add('hidden'); document.getElementById('ownerLoginContainer').classList.remove('hidden'); }
     function showEmployeeLogin() { document.getElementById('ownerLoginContainer').classList.add('hidden'); document.getElementById('employeeLoginContainer').classList.remove('hidden'); }
     async function adminLogout() { await db.auth.signOut(); location.reload(); }
@@ -95,29 +95,27 @@
     async function showEditEmployee(id) { try { const { data: emp, error } = await db.from('employees').select('*').eq('id', id).single(); if (error) throw error; editingEmpId = id; admEditEmpName.value = emp.name; admEditEmpDept.value = emp.dept; admEditEmpPosition.value = emp.position; admEditEmpEntryDate.value = emp.entryDate; editEmployeeFormContainer.classList.remove('hidden'); } catch(e) { alert('직원 정보 로딩 실패'); }}
     async function updateRequestStatus(id, status) { if(!confirm(`'${status}' 상태로 변경?`)) return; try { const { error } = await db.from('leave_requests').update({ status }).eq('id', id); if (error) throw error; alert('상태 변경 완료'); await renderAdmRequestTable(); } catch(e) { alert(`상태 변경 실패: ${e.message}`); }}
 
-    // --- 3. 데이터 렌더링 함수 ---
+    // --- 데이터 렌더링 함수 ---
     async function renderAdmEmployees() { try{ const { data, error } = await db.from('employees').select('*').order('id'); if (error) throw error; const tbody = document.getElementById('admEmployeesTable'); tbody.innerHTML = ''; (data || []).forEach(emp => { tbody.innerHTML += `<tr><td class="p-2">${emp.id}</td><td class="p-2">${emp.name}</td><td class="p-2">${emp.dept}</td><td class="p-2">${emp.position}</td><td class="p-2">${emp.entryDate}</td><td class="p-2">${emp.password ? '******' : '-'}</td><td class="p-2 text-center"><button class="text-blue-600 mr-2" onclick="showEditEmployee(${emp.id})">수정</button><button class="text-red-600" onclick="deleteEmployee(${emp.id})">삭제</button></td></tr>`; }); } catch(e) { alert('직원 목록 로딩 실패'); }}
     async function renderSettings() { try { const { data: depts, error: dErr } = await db.from('departments').select('*'); if (dErr) throw dErr; const deptList = document.getElementById('deptList'); deptList.innerHTML = ''; (depts||[]).forEach(d => { deptList.innerHTML += `<tr><td class="p-2">${d.name}</td><td class="p-2 text-right"><button class="text-red-600" onclick="deleteDept(${d.id})">삭제</button></td></tr>`; }); const { data: pos, error: pErr } = await db.from('positions').select('*'); if (pErr) throw pErr; const positionList = document.getElementById('positionList'); positionList.innerHTML = ''; (pos||[]).forEach(p => { positionList.innerHTML += `<tr><td class="p-2">${p.name}</td><td class="p-2 text-right"><button class="text-red-600" onclick="deletePosition(${p.id})">삭제</button></td></tr>`; }); await populateDeptPositionSelects(); } catch(e) { alert('설정 정보 로딩 실패'); }}
     async function populateDeptPositionSelects() { try { const { data: depts } = await db.from('departments').select('name'); const { data: pos } = await db.from('positions').select('name'); [admNewEmpDept, admEditEmpDept].forEach(sel => { sel.innerHTML = '<option value="" disabled selected>부서</option>'; (depts || []).forEach(d => sel.innerHTML += `<option value="${d.name}">${d.name}</option>`); }); [admNewEmpPosition, admEditEmpPosition].forEach(sel => { sel.innerHTML = '<option value="" disabled selected>직책</option>'; (pos || []).forEach(p => sel.innerHTML += `<option value="${p.name}">${p.name}</option>`); }); } catch(e) { alert('부서/직책 로딩 실패'); }}
     async function renderAdmRequestTable() { try { const { data, error } = await db.from('leave_requests').select('*').order('id', { ascending: false }); if (error) throw error; admRequestsTable.innerHTML = ''; (data || []).forEach(req => { let actions = '-'; if (req.status === 'pending') actions = `<button class="text-green-600 mr-2" onclick="updateRequestStatus(${req.id}, 'approved')">승인</button><button class="text-red-600" onclick="updateRequestStatus(${req.id}, 'rejected')">반려</button>`; admRequestsTable.innerHTML += `<tr><td class="p-2 text-sm">${req.employeeName}</td><td class="p-2 text-sm">${(req.dates || []).join(', ')}</td><td class="p-2 text-sm">${req.reason}</td><td class="p-2 text-sm">${req.status}</td><td class="p-2 text-center">${actions}</td></tr>`; }); } catch(e) { alert(`연차 목록 로딩 실패: ${e.message}`); }}
+    
     async function refreshEmployeeData() {
         if(!currentEmployee) return;
         try {
             const { data, error } = await db.from('leave_requests').select('*'); if (error) throw error;
-            const legal = 15; // 법정 연차 계산 로직은 추후 추가
+            const legal = 15; // 법정 연차 계산은 추후에 복원
             let pending = 0, approved = 0, used = 0;
             const myRequests = data.filter(r => r.employeeId === currentEmployee.id);
-            myRequests.forEach(req => {
-                if(req.status === 'pending') pending += req.dates.length;
-                else if(req.status === 'approved') { req.dates.forEach(d => { dayjs(d).isBefore(dayjs(), 'day') ? used++ : approved++; });}
-            });
+            myRequests.forEach(req => { if(req.status === 'pending') pending += req.dates.length; else if(req.status === 'approved') { req.dates.forEach(d => { dayjs(d).isBefore(dayjs(), 'day') ? used++ : approved++; });}});
             empTotalLeave.textContent = `${legal}일`; empPendingLeave.textContent = `${pending}일`; empApprovedLeave.textContent = `${approved}일`; empUsedLeave.textContent = `${used}일`; empRemainingLeave.textContent = `${legal - approved - used}일`;
             const events = data.map(req => ({ title: req.employeeName, start: req.dates[0], end: dayjs(req.dates[req.dates.length - 1]).add(1, 'day').format('YYYY-MM-DD'), backgroundColor: req.status === 'approved' ? '#34d399' : '#facc15' }));
             empCalendar.removeAllEvents(); empCalendar.addEventSource(events);
         } catch(e) { alert('연차 데이터 로딩 실패'); }
     }
 
-    // --- 4. 앱 실행 로직 (페이지 로드 후) ---
+    // --- 앱 실행 로직 ---
     document.addEventListener('DOMContentLoaded', () => {
       const loginSection = document.getElementById('loginSection');
       const adminPortal = document.getElementById('adminPortal');
