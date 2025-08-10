@@ -7,7 +7,16 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style> .hidden { display: none; } .fc-daygrid-day.selected { background-color: #c7e0ff !important; } </style>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    .hidden { display: none; }
+    .fc-daygrid-day.selected { background-color: #c7e0ff !important; }
+    .signature-canvas { border: 1px solid #ccc; cursor: crosshair; }
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+    .modal-content { position: relative; background: white; margin: 10% auto; padding: 20px; width: 80%; max-width: 600px; border-radius: 8px; }
+    .close { position: absolute; right: 10px; top: 10px; font-size: 24px; cursor: pointer; }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4">
 
@@ -15,6 +24,7 @@
   <div id="loginSection" class="flex flex-col items-center justify-center min-h-screen">
     <div class="max-w-xl w-full bg-white rounded shadow p-6 text-center">
       <h1 class="text-3xl font-bold mb-6">연차 관리 시스템</h1>
+      <p class="text-gray-600 mb-6">Supabase 기반으로 작동하며, 모든 데이터는 클라우드에 안전하게 저장됩니다.</p>
       <div class="flex flex-col gap-6">
         <div id="employeeLoginContainer" class="space-y-4">
           <h2 class="text-xl font-semibold">직원 로그인</h2>
@@ -23,8 +33,12 @@
             <input type="password" id="empLoginPass" placeholder="비밀번호" class="w-full border p-3 rounded" required />
             <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">로그인</button>
           </form>
-          <button type="button" onclick="showOwnerLogin()" class="text-blue-600 underline">사업주 로그인</button>
+          <div class="flex gap-2">
+            <button type="button" onclick="showOwnerLogin()" class="flex-1 bg-green-600 text-white py-2 rounded">사업주 로그인</button>
+            <button type="button" onclick="showResetStep1()" class="flex-1 bg-yellow-600 text-white py-2 rounded">비밀번호 초기화</button>
+          </div>
         </div>
+        
         <div id="ownerLoginContainer" class="hidden space-y-4">
           <h2 class="text-xl font-semibold">사업주 로그인</h2>
           <form id="adminLoginForm" class="space-y-3">
@@ -34,32 +48,198 @@
           </form>
           <button type="button" onclick="showEmployeeLogin()" class="text-blue-600 underline">직원 로그인으로 돌아가기</button>
         </div>
+
+        <!-- 사업주 가입 섹션 -->
+        <div id="ownerRegisterSection" class="hidden space-y-4">
+          <h2 class="text-xl font-semibold">사업주 가입</h2>
+          <form id="ownerRegisterForm" class="space-y-3">
+            <input type="email" id="ownerEmail" placeholder="이메일" class="w-full border p-3 rounded" required />
+            <input type="password" id="ownerPassword" placeholder="비밀번호" class="w-full border p-3 rounded" required />
+            <input type="password" id="ownerPasswordConfirm" placeholder="비밀번호 확인" class="w-full border p-3 rounded" required />
+            <button type="submit" class="w-full bg-green-600 text-white py-2 rounded">가입</button>
+          </form>
+          <button type="button" onclick="showEmployeeLogin()" class="text-blue-600 underline">로그인으로 돌아가기</button>
+        </div>
+
+        <!-- 비밀번호 초기화: 단계1 -->
+        <div id="resetStep1" class="hidden space-y-4">
+          <h2 class="text-xl font-semibold">비밀번호 초기화: 단계1</h2>
+          <p class="text-sm text-gray-600">가입한 이메일을 입력하세요.</p>
+          <form id="resetStep1Form" class="space-y-3">
+            <input type="email" id="resetEmail" placeholder="이메일" class="w-full border p-3 rounded" required />
+            <button type="submit" class="w-full bg-yellow-600 text-white py-2 rounded">인증 코드 전송</button>
+          </form>
+          <button type="button" onclick="showEmployeeLogin()" class="text-blue-600 underline">로그인으로 돌아가기</button>
+        </div>
+
+        <!-- 비밀번호 초기화: 단계2 -->
+        <div id="resetStep2" class="hidden space-y-4">
+          <h2 class="text-xl font-semibold">비밀번호 초기화: 단계2</h2>
+          <p class="text-sm text-gray-600">이메일로 전송된 인증 코드를 입력하세요.</p>
+          <form id="resetStep2Form" class="space-y-3">
+            <input type="text" id="resetCode" placeholder="인증 코드" class="w-full border p-3 rounded" required />
+            <button type="submit" class="w-full bg-yellow-600 text-white py-2 rounded">코드 확인</button>
+          </form>
+          <button type="button" onclick="showResetStep1()" class="text-blue-600 underline">이전 단계로</button>
+        </div>
+
+        <!-- 비밀번호 초기화: 단계3 -->
+        <div id="resetStep3" class="hidden space-y-4">
+          <h2 class="text-xl font-semibold">비밀번호 초기화: 단계3</h2>
+          <p class="text-sm text-gray-600">새 비밀번호를 입력하세요.</p>
+          <form id="resetStep3Form" class="space-y-3">
+            <input type="password" id="newPassword" placeholder="새 비밀번호" class="w-full border p-3 rounded" required />
+            <input type="password" id="newPasswordConfirm" placeholder="새 비밀번호 확인" class="w-full border p-3 rounded" required />
+            <button type="submit" class="w-full bg-yellow-600 text-white py-2 rounded">비밀번호 변경</button>
+          </form>
+          <button type="button" onclick="showEmployeeLogin()" class="text-blue-600 underline">로그인으로 돌아가기</button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- 직원 포털 -->
   <div id="employeePortal" class="hidden">
-    <div class="max-w-5xl mx-auto bg-white shadow rounded p-6">
-        <div class="flex justify-between items-center mb-4"><h1 class="text-2xl font-bold">내 연차 신청</h1><div><span id="employeeInfo" class="text-sm text-gray-600"></span><button onclick="employeeLogout()" class="ml-2 px-3 py-1 text-sm bg-gray-300 rounded">로그아웃</button></div></div>
-        <div id="empMainSection">
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center mb-6 text-sm">
-            <div class="bg-blue-100 p-3 rounded"><p>총 연차</p><p class="text-xl font-bold" id="empTotalLeave">0일</p></div>
-            <div class="bg-yellow-100 p-3 rounded"><p>승인 대기</p><p class="text-xl font-bold" id="empPendingLeave">0일</p></div>
-            <div class="bg-green-100 p-3 rounded"><p>승인 완료</p><p class="text-xl font-bold" id="empApprovedLeave">0일</p></div>
-            <div class="bg-gray-200 p-3 rounded"><p>사용 연차</p><p class="text-xl font-bold" id="empUsedLeave">0일</p></div>
-            <div class="bg-red-100 p-3 rounded"><p>잔여 연차</p><p class="text-xl font-bold" id="empRemainingLeave">0일</p></div>
-          </div>
-          <div id="empCalendar"></div>
-          <div class="text-right mt-4"><button id="empApplyBtn" class="bg-blue-600 text-white px-4 py-2 rounded">연차 신청</button></div>
+    <div class="max-w-6xl mx-auto bg-white shadow rounded p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">내 연차 신청</h1>
+        <div class="flex items-center gap-2">
+          <span id="employeeInfo" class="text-sm text-gray-600"></span>
+          <button onclick="refreshEmployeeData()" class="px-3 py-1 text-sm bg-blue-300 rounded">새로고침</button>
+          <button onclick="employeeLogout()" class="px-3 py-1 text-sm bg-gray-300 rounded">로그아웃</button>
         </div>
+      </div>
+      
+      <div id="empMainSection">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center mb-6 text-sm">
+          <div class="bg-blue-100 p-3 rounded">
+            <p>총 연차</p>
+            <p class="text-xl font-bold" id="empTotalLeave">0일</p>
+          </div>
+          <div class="bg-yellow-100 p-3 rounded">
+            <p>승인 대기</p>
+            <p class="text-xl font-bold" id="empPendingLeave">0일</p>
+          </div>
+          <div class="bg-green-100 p-3 rounded">
+            <p>승인 완료</p>
+            <p class="text-xl font-bold" id="empApprovedLeave">0일</p>
+          </div>
+          <div class="bg-gray-200 p-3 rounded">
+            <p>사용 연차</p>
+            <p class="text-xl font-bold" id="empUsedLeave">0일</p>
+          </div>
+          <div class="bg-red-100 p-3 rounded">
+            <p>잔여 연차</p>
+            <p class="text-xl font-bold" id="empRemainingLeave">0일</p>
+          </div>
+        </div>
+
+        <!-- 직원 포털 탭 -->
+        <div class="flex gap-4 mb-4">
+          <button id="empTabCalendar" class="emp-tab-btn bg-blue-500 text-white px-3 py-2 rounded">연차 신청</button>
+          <button id="empTabList" class="emp-tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">신청 내역</button>
+          <button id="empTabStatus" class="emp-tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded hidden">연차 신청 현황</button>
+          <button id="empTabDocs" class="emp-tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">문서 관리</button>
+        </div>
+
+        <!-- 연차 신청 탭 -->
+        <div id="empCalendarSection" class="emp-section">
+          <div id="empCalendar"></div>
+          <div class="text-right mt-4">
+            <button id="empApplyBtn" class="bg-blue-600 text-white px-4 py-2 rounded">연차 신청</button>
+          </div>
+        </div>
+
+        <!-- 신청 내역 탭 -->
+        <div id="empListSection" class="emp-section hidden">
+          <div class="bg-white shadow rounded overflow-x-auto p-4">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="p-2 text-left text-xs">신청 날짜</th>
+                  <th class="p-2 text-left text-xs">연차 날짜</th>
+                  <th class="p-2 text-left text-xs">사유</th>
+                  <th class="p-2 text-left text-xs">상태</th>
+                  <th class="p-2 text-center text-xs">작업</th>
+                </tr>
+              </thead>
+              <tbody id="empRequestsTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 중간 관리자 탭 (권한이 있는 직원만 표시) -->
+        <div id="empStatusSection" class="emp-section hidden">
+          <h3 class="text-lg font-semibold mb-3">중간 승인 대기 연차</h3>
+          <div class="bg-white shadow rounded overflow-x-auto p-4">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="p-2 text-left text-xs">직원</th>
+                  <th class="p-2 text-left text-xs">신청 날짜</th>
+                  <th class="p-2 text-left text-xs">연차 날짜</th>
+                  <th class="p-2 text-left text-xs">사유</th>
+                  <th class="p-2 text-center text-xs">처리</th>
+                </tr>
+              </thead>
+              <tbody id="empStatusTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 문서 관리 탭 -->
+        <div id="empDocSection" class="emp-section hidden">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 class="text-lg font-semibold mb-3">문서 요청</h3>
+              <div class="bg-white shadow rounded p-4">
+                <form id="empDocRequestForm" class="space-y-3">
+                  <div>
+                    <label class="block text-sm font-medium mb-1">문서 종류</label>
+                    <select id="empDocType" class="w-full border p-2 rounded" required>
+                      <option value="">선택하세요</option>
+                      <option value="재직증명서">재직증명서</option>
+                      <option value="경력증명서">경력증명서</option>
+                      <option value="소득금액증명원">소득금액증명원</option>
+                      <option value="기타">기타</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-1">요청 사유</label>
+                    <textarea id="empDocReason" class="w-full border p-2 rounded" rows="3" required></textarea>
+                  </div>
+                  <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">문서 요청</button>
+                </form>
+              </div>
+            </div>
+            
+            <div>
+              <h3 class="text-lg font-semibold mb-3">내 문서 목록</h3>
+              <div class="bg-white shadow rounded p-4">
+                <div id="empDocList" class="space-y-2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- 연차 신청서 폼 -->
     <div id="empFormContainer" class="max-w-2xl mx-auto mt-8 bg-white shadow rounded p-6 hidden">
       <h2 class="text-xl font-semibold mb-4">연차 신청서</h2>
       <form id="empLeaveForm" class="space-y-4">
-        <div><label class="block font-medium">선택 날짜 (<span id="empSelectedCount">0</span>일)</label><ul id="empSelectedDatesList" class="list-disc list-inside"></ul></div>
-        <div><label class="block font-medium mb-1">사유</label><textarea id="empReason" class="w-full p-2 border rounded" rows="3" required></textarea></div>
-        <div class="flex justify-end gap-2"><button type="reset" id="empCancelBtn" class="bg-gray-400 text-white px-4 py-2 rounded">취소</button><button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">제출</button></div>
+        <div>
+          <label class="block font-medium">선택 날짜 (<span id="empSelectedCount">0</span>일)</label>
+          <ul id="empSelectedDatesList" class="list-disc list-inside"></ul>
+        </div>
+        <div>
+          <label class="block font-medium mb-1">사유</label>
+          <textarea id="empReason" class="w-full p-2 border rounded" rows="3" required></textarea>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="reset" id="empCancelBtn" class="bg-gray-400 text-white px-4 py-2 rounded">취소</button>
+          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">제출</button>
+        </div>
       </form>
     </div>
   </div>
@@ -67,134 +247,834 @@
   <!-- 관리자 포털 -->
   <div id="adminPortal" class="hidden">
     <div class="max-w-6xl mx-auto">
-      <div class="flex justify-between items-center mb-4"><h1 class="text-3xl font-bold">연차 관리 (관리자)</h1><button onclick="adminLogout()" class="px-3 py-1 text-sm bg-gray-300 rounded">로그아웃</button></div>
-       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mb-6 text-sm">
-        <div class="bg-yellow-100 p-4 rounded"><p>승인 대기</p><p class="text-xl font-bold" id="admSummaryPending">0건</p></div>
-        <div class="bg-green-100 p-4 rounded"><p>승인 완료 (예정)</p><p class="text-xl font-bold" id="admSummaryApproved">0건</p></div>
-        <div class="bg-gray-200 p-4 rounded"><p>사용 완료</p><p class="text-xl font-bold" id="admSummaryUsed">0건</p></div>
-        <div class="bg-red-100 p-4 rounded"><p>반려</p><p class="text-xl font-bold" id="admSummaryRejected">0건</p></div>
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-3xl font-bold">연차 관리 (관리자)</h1>
+        <div class="flex items-center gap-2">
+          <button onclick="refreshAdminData()" class="px-3 py-1 text-sm bg-blue-300 rounded">새로고침</button>
+          <button onclick="adminLogout()" class="px-3 py-1 text-sm bg-gray-300 rounded">로그아웃</button>
+        </div>
       </div>
+      
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mb-6 text-sm">
+        <div class="bg-yellow-100 p-4 rounded">
+          <p>승인 대기</p>
+          <p class="text-xl font-bold" id="admSummaryPending">0건</p>
+        </div>
+        <div class="bg-green-100 p-4 rounded">
+          <p>승인 완료 (예정)</p>
+          <p class="text-xl font-bold" id="admSummaryApproved">0건</p>
+        </div>
+        <div class="bg-gray-200 p-4 rounded">
+          <p>사용 완료</p>
+          <p class="text-xl font-bold" id="admSummaryUsed">0건</p>
+        </div>
+        <div class="bg-red-100 p-4 rounded">
+          <p>반려</p>
+          <p class="text-xl font-bold" id="admSummaryRejected">0건</p>
+        </div>
+      </div>
+
+      <!-- 관리자 포털 탭 -->
       <div class="flex gap-4 mb-4">
         <button id="tabList" class="tab-btn bg-blue-500 text-white px-3 py-2 rounded">연차 목록</button>
+        <button id="tabCalendar" class="tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">캘린더 뷰</button>
         <button id="tabEmployees" class="tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">직원 관리</button>
+        <button id="tabEmployeeSummary" class="tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">직원 요약</button>
+        <button id="tabLeaveDays" class="tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">연차 정책</button>
         <button id="tabSettings" class="tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">사업장 설정</button>
+        <button id="tabDocs" class="tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">문서 관리</button>
       </div>
-      <div id="admLeaveListSection" class="section"><div class="bg-white shadow rounded overflow-x-auto p-4"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">직원</th><th class="p-2 text-left text-xs">신청 날짜</th><th class="p-2 text-left text-xs">사유</th><th class="p-2 text-left text-xs">상태</th><th class="p-2 text-center text-xs">처리</th></tr></thead><tbody id="admRequestsTable"></tbody></table></div></div>
-      <div id="admEmployeeSection" class="section" style="display:none;"><div class="bg-white shadow rounded p-4"><h2 class="text-lg font-semibold mb-3">직원 목록</h2><table class="min-w-full divide-y divide-gray-200 mb-4"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">ID</th><th class="p-2 text-left text-xs">이름</th><th class="p-2 text-left text-xs">부서</th><th class="p-2 text-left text-xs">직책</th><th class="p-2 text-left text-xs">입사일</th><th class="p-2 text-left text-xs">비밀번호</th><th class="p-2 text-center text-xs">수정/삭제</th></tr></thead><tbody id="admEmployeesTable"></tbody></table><h3 class="text-md font-semibold mb-2">직원 추가</h3><form id="admAddEmployeeForm" class="grid grid-cols-1 md:grid-cols-5 gap-2 mb-4"><input id="admNewEmpName" type="text" placeholder="이름" class="p-2 border rounded" required /><select id="admNewEmpDept" class="p-2 border rounded" required><option value="" disabled selected>부서</option></select><select id="admNewEmpPosition" class="p-2 border rounded" required><option value="" disabled selected>직책</option></select><input id="admNewEmpEntryDate" type="date" class="p-2 border rounded" required /><input id="admNewEmpPassword" type="password" placeholder="로그인 비번" class="p-2 border rounded" /><div class="md:col-span-5 text-right"><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></div></form><div id="editEmployeeFormContainer" class="hidden mt-8"><h3 class="text-md font-semibold mb-2">직원 정보 수정</h3><form id="admEditEmployeeForm" class="grid grid-cols-1 md:grid-cols-5 gap-2 mb-4"><input id="admEditEmpName" type="text" class="p-2 border rounded" required /><select id="admEditEmpDept" class="p-2 border rounded" required></select><select id="admEditEmpPosition" class="p-2 border rounded" required></select><input id="admEditEmpEntryDate" type="date" class="p-2 border rounded" required /><div class="md:col-span-5 text-right"><button type="button" id="editCancelBtn" class="bg-gray-400 text-white px-4 py-2 rounded mr-2">취소</button><button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">저장</button></div></form></div></div></div>
-      <div id="admSettingsSection" class="section" style="display:none;"><div class="bg-white shadow rounded p-4 space-y-6"><h2 class="text-lg font-semibold mb-2">사업장 설정</h2><div><h3 class="text-md font-semibold">부서 목록</h3><table class="min-w-full mb-2"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">부서명</th><th class="p-2 text-right text-xs">삭제</th></tr></thead><tbody id="deptList"></tbody></table><form id="addDeptForm" class="flex gap-2"><input id="newDeptName" type="text" placeholder="새 부서명" class="flex-grow p-2 border rounded" required /><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></form></div><div><h3 class="text-md font-semibold">직책 목록</h3><table class="min-w-full mb-2"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">직책명</th><th class="p-2 text-right text-xs">삭제</th></tr></thead><tbody id="positionList"></tbody></table><form id="addPositionForm" class="flex gap-2"><input id="newPositionName" type="text" placeholder="새 직책명" class="flex-grow p-2 border rounded" required /><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></form></div></div></div>
+
+      <!-- 연차 목록 섹션 -->
+      <div id="admLeaveListSection" class="section">
+        <div class="bg-white shadow rounded overflow-x-auto p-4">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="p-2 text-left text-xs">직원</th>
+                <th class="p-2 text-left text-xs">신청 날짜</th>
+                <th class="p-2 text-left text-xs">연차 날짜</th>
+                <th class="p-2 text-left text-xs">사유</th>
+                <th class="p-2 text-left text-xs">상태</th>
+                <th class="p-2 text-center text-xs">처리</th>
+              </tr>
+            </thead>
+            <tbody id="admRequestsTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 캘린더 뷰 섹션 -->
+      <div id="admCalendarSection" class="section hidden">
+        <div class="bg-white shadow rounded p-4">
+          <div id="admCalendar"></div>
+        </div>
+      </div>
+
+      <!-- 직원 요약 섹션 -->
+      <div id="admEmployeeSummarySection" class="section hidden">
+        <div class="bg-white shadow rounded p-4">
+          <h3 class="text-lg font-semibold mb-3">직원별 연차 현황</h3>
+          <div id="admEmployeeSummaryTable"></div>
+        </div>
+      </div>
+
+      <!-- 직원 관리 섹션 -->
+      <div id="admEmployeeSection" class="section hidden">
+        <div class="bg-white shadow rounded p-4">
+          <h2 class="text-lg font-semibold mb-3">직원 목록</h2>
+          <table class="min-w-full divide-y divide-gray-200 mb-4">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="p-2 text-left text-xs">ID</th>
+                <th class="p-2 text-left text-xs">이름</th>
+                <th class="p-2 text-left text-xs">부서</th>
+                <th class="p-2 text-left text-xs">직책</th>
+                <th class="p-2 text-left text-xs">입사일</th>
+                <th class="p-2 text-left text-xs">중간 관리자</th>
+                <th class="p-2 text-left text-xs">연차 승인 권한</th>
+                <th class="p-2 text-left text-xs">비밀번호</th>
+                <th class="p-2 text-center text-xs">수정/삭제</th>
+              </tr>
+            </thead>
+            <tbody id="admEmployeesTable"></tbody>
+          </table>
+          
+          <h3 class="text-md font-semibold mb-2">직원 추가</h3>
+          <form id="admAddEmployeeForm" class="grid grid-cols-1 md:grid-cols-7 gap-2 mb-4">
+            <input id="admNewEmpName" type="text" placeholder="이름" class="p-2 border rounded" required />
+            <select id="admNewEmpDept" class="p-2 border rounded" required>
+              <option value="" disabled selected>부서</option>
+            </select>
+            <select id="admNewEmpPosition" class="p-2 border rounded" required>
+              <option value="" disabled selected>직책</option>
+            </select>
+            <input id="admNewEmpEntryDate" type="date" class="p-2 border rounded" required />
+            <input id="admNewEmpPassword" type="password" placeholder="로그인 비번" class="p-2 border rounded" />
+            <div class="flex items-center gap-2">
+              <input id="admNewEmpIsManager" type="checkbox" class="mr-1" />
+              <label class="text-sm">중간 관리자</label>
+            </div>
+            <div class="flex items-center gap-2">
+              <input id="admNewEmpCanApprove" type="checkbox" class="mr-1" />
+              <label class="text-sm">연차 승인 권한</label>
+            </div>
+            <div class="md:col-span-7 text-right">
+              <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button>
+            </div>
+          </form>
+          
+          <div id="editEmployeeFormContainer" class="hidden mt-8">
+            <h3 class="text-md font-semibold mb-2">직원 정보 수정</h3>
+            <form id="admEditEmployeeForm" class="grid grid-cols-1 md:grid-cols-6 gap-2 mb-4">
+              <input id="admEditEmpName" type="text" class="p-2 border rounded" required />
+              <select id="admEditEmpDept" class="p-2 border rounded" required></select>
+              <select id="admEditEmpPosition" class="p-2 border rounded" required></select>
+              <input id="admEditEmpEntryDate" type="date" class="p-2 border rounded" required />
+              <div class="flex items-center gap-2">
+                <input id="admEditEmpIsManager" type="checkbox" class="mr-1" />
+                <label class="text-sm">중간 관리자</label>
+              </div>
+              <div class="flex items-center gap-2">
+                <input id="admEditEmpCanApprove" type="checkbox" class="mr-1" />
+                <label class="text-sm">연차 승인 권한</label>
+              </div>
+              <div class="md:col-span-6 text-right">
+                <button type="button" id="editCancelBtn" class="bg-gray-400 text-white px-4 py-2 rounded mr-2">취소</button>
+                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">저장</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- 연차 정책 섹션 -->
+      <div id="admLeaveDaysSection" class="section hidden">
+        <div class="bg-white shadow rounded p-4">
+          <h3 class="text-lg font-semibold mb-3">연차 정책 설정</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 class="text-md font-semibold mb-2">기본 연차 일수</h4>
+              <form id="leaveDaysForm" class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium mb-1">신입 직원 기본 연차</label>
+                  <input id="newEmployeeLeaveDays" type="number" min="0" max="30" class="w-full border p-2 rounded" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium mb-1">경력 직원 기본 연차</label>
+                  <input id="experiencedEmployeeLeaveDays" type="number" min="0" max="30" class="w-full border p-2 rounded" />
+                </div>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">저장</button>
+              </form>
+            </div>
+            <div>
+              <h4 class="text-md font-semibold mb-2">현재 설정</h4>
+              <div id="currentLeavePolicy" class="space-y-2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 사업장 설정 섹션 -->
+      <div id="admSettingsSection" class="section hidden">
+        <div class="bg-white shadow rounded p-4 space-y-6">
+          <h2 class="text-lg font-semibold mb-2">사업장 설정</h2>
+          
+          <div>
+            <h3 class="text-md font-semibold">부서 목록</h3>
+            <table class="min-w-full mb-2">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="p-2 text-left text-xs">부서명</th>
+                  <th class="p-2 text-right text-xs">삭제</th>
+                </tr>
+              </thead>
+              <tbody id="deptList"></tbody>
+            </table>
+            <form id="addDeptForm" class="flex gap-2">
+              <input id="newDeptName" type="text" placeholder="새 부서명" class="w-full border p-2 rounded" required />
+              <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button>
+            </form>
+          </div>
+          
+          <div>
+            <h3 class="text-md font-semibold">직책 목록</h3>
+            <table class="min-w-full mb-2">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="p-2 text-left text-xs">직책명</th>
+                  <th class="p-2 text-right text-xs">삭제</th>
+                </tr>
+              </thead>
+              <tbody id="positionList"></tbody>
+            </table>
+            <form id="addPositionForm" class="flex gap-2">
+              <input id="newPositionName" type="text" placeholder="새 직책명" class="w-full border p-2 rounded" required />
+              <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- 문서 관리 섹션 -->
+      <div id="admDocsSection" class="section hidden">
+        <div class="bg-white shadow rounded p-4">
+          <h3 class="text-lg font-semibold mb-3">문서 요청 관리</h3>
+          <div id="admDocRequestsTable"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 문서 수동 제출 모달 -->
+  <div id="empManualDocModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('empManualDocModal')">&times;</span>
+      <h3 class="text-lg font-semibold mb-4">문서 수동 제출</h3>
+      <form id="empManualDocForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">문서 종류</label>
+          <select id="manualDocType" class="w-full border p-2 rounded" required>
+            <option value="">선택하세요</option>
+            <option value="재직증명서">재직증명서</option>
+            <option value="경력증명서">경력증명서</option>
+            <option value="소득금액증명원">소득금액증명원</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">파일 업로드</label>
+          <input type="file" id="manualDocFile" class="w-full border p-2 rounded" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">서명</label>
+          <canvas id="signatureCanvas" class="signature-canvas w-full h-32"></canvas>
+          <div class="flex gap-2 mt-2">
+            <button type="button" onclick="clearSignature()" class="px-3 py-1 bg-gray-400 text-white rounded">지우기</button>
+            <button type="button" onclick="captureSignature()" class="px-3 py-1 bg-blue-600 text-white rounded">서명 캡처</button>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="closeModal('empManualDocModal')" class="bg-gray-400 text-white px-4 py-2 rounded">취소</button>
+          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">제출</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 서명 모달 -->
+  <div id="signatureModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeSignatureModal()">&times;</span>
+      <h3 class="text-lg font-semibold mb-4">서명</h3>
+      <canvas id="signatureCanvasModal" class="signature-canvas w-full h-32 mb-4"></canvas>
+      <div class="flex gap-2 justify-center">
+        <button onclick="clearSignatureModal()" class="px-3 py-1 bg-gray-400 text-white rounded">지우기</button>
+        <button onclick="captureSignatureModal()" class="px-3 py-1 bg-blue-600 text-white rounded">서명 완료</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 직원 대시보드 모달 -->
+  <div id="admEmployeeDashboardModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeAdmEmployeeDashboard()">&times;</span>
+      <h3 class="text-lg font-semibold mb-4">직원 연차 현황</h3>
+      <div id="admEmployeeDashboardContent"></div>
+    </div>
+  </div>
+
+  <!-- 문서 보기 모달 -->
+  <div id="docViewModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('docViewModal')">&times;</span>
+      <h3 class="text-lg font-semibold mb-4">문서 상세</h3>
+      <div id="docViewContent"></div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
   <script>
-    const SUPABASE_URL = 'https://chnqtrmlglqdmzqwsazm.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobnF0cm1sZ2xxZG16cXdzYXptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODUxOTksImV4cCI6MjA3MDA2MTE5OX0.HBvXKoFAQsIjyePoMgtOpYZePoOHO9dYekcAsY1G6gQ';
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // // ... existing code ...
+
+// 중간 관리자 권한 확인 함수
+function checkManagerPermissions() {
+  if (currentEmployee && currentEmployee.is_manager) {
+    document.getElementById('empTabStatus').classList.remove('hidden');
+  } else {
+    document.getElementById('empTabStatus').classList.add('hidden');
+  }
+}
+
+// 직원 포털 초기화 시 권한 확인
+function initializeEmployeePortal() {
+  // ... existing code ...
+  checkManagerPermissions();
+  // ... existing code ...
+}
+
+// 중간 승인 대기 연차 로드
+async function loadManagerPendingRequests() {
+  if (!currentEmployee || !currentEmployee.can_approve_leave) return;
+  
+  try {
+    const { data, error } = await supabase
+      .from('leave_requests')
+      .select(`
+        *,
+        employees!inner(name, department, position)
+      `)
+      .eq('status', 'pending')
+      .eq('employees.department', currentEmployee.department);
     
-    let editingEmpId = null, currentEmployee = null, empCalendar, selectedDates = new Set();
-
-    // --- 화면 전환 및 공용 함수 ---
-    function showOwnerLogin() { document.getElementById('employeeLoginContainer').classList.add('hidden'); document.getElementById('ownerLoginContainer').classList.remove('hidden'); }
-    function showEmployeeLogin() { document.getElementById('ownerLoginContainer').classList.add('hidden'); document.getElementById('employeeLoginContainer').classList.remove('hidden'); }
-    async function adminLogout() { await db.auth.signOut(); location.reload(); }
-    function employeeLogout() { sessionStorage.removeItem('loggedInEmployee'); currentEmployee = null; location.reload(); }
+    if (error) throw error;
     
-    async function deleteEmployee(id) { if (!confirm(`직원을 삭제하시겠습니까?`)) return; try { const { error } = await db.from('employees').delete().eq('id', id); if (error) throw error; await renderAdmEmployees(); } catch (e) { alert('직원 삭제 실패'); }}
-    async function deleteDept(id) { if (!confirm(`삭제하시겠습니까?`)) return; try { const { error } = await db.from('departments').delete().eq('id', id); if(error) throw error; await renderSettings(); } catch (e) { alert('부서 삭제 실패'); }}
-    async function deletePosition(id) { if (!confirm(`삭제하시겠습니까?`)) return; try { const { error } = await db.from('positions').delete().eq('id', id); if(error) throw error; await renderSettings(); } catch (e) { alert('직책 삭제 실패'); }}
-    async function showEditEmployee(id) { try { const { data: emp, error } = await db.from('employees').select('*').eq('id', id).single(); if (error) throw error; editingEmpId = id; admEditEmpName.value = emp.name; admEditEmpDept.value = emp.dept; admEditEmpPosition.value = emp.position; admEditEmpEntryDate.value = emp.entryDate; editEmployeeFormContainer.classList.remove('hidden'); } catch(e) { alert('직원 정보 로딩 실패'); }}
-    async function updateRequestStatus(id, status) { if(!confirm(`'${status}' 상태로 변경?`)) return; try { const { error } = await db.from('leave_requests').update({ status }).eq('id', id); if (error) throw error; alert('상태 변경 완료'); await renderAdmRequestTable(); await updateAdminSummary(); } catch(e) { alert(`상태 변경 실패: ${e.message}`); }}
-
-    // --- 데이터 렌더링 함수 ---
-    async function renderAdmEmployees() { try{ const { data, error } = await db.from('employees').select('*').order('id'); if (error) throw error; const tbody = document.getElementById('admEmployeesTable'); tbody.innerHTML = ''; (data || []).forEach(emp => { tbody.innerHTML += `<tr><td class="p-2">${emp.id}</td><td class="p-2">${emp.name}</td><td class="p-2">${emp.dept}</td><td class="p-2">${emp.position}</td><td class="p-2">${emp.entryDate}</td><td class="p-2">${emp.password ? '******' : '-'}</td><td class="p-2 text-center"><button class="text-blue-600 mr-2" onclick="showEditEmployee(${emp.id})">수정</button><button class="text-red-600" onclick="deleteEmployee(${emp.id})">삭제</button></td></tr>`; }); } catch(e) { alert('직원 목록 로딩 실패'); }}
-    async function renderSettings() { try { const { data: depts, error: dErr } = await db.from('departments').select('*'); if (dErr) throw dErr; const deptList = document.getElementById('deptList'); deptList.innerHTML = ''; (depts||[]).forEach(d => { deptList.innerHTML += `<tr><td class="p-2">${d.name}</td><td class="p-2 text-right"><button class="text-red-600" onclick="deleteDept(${d.id})">삭제</button></td></tr>`; }); const { data: pos, error: pErr } = await db.from('positions').select('*'); if (pErr) throw pErr; const positionList = document.getElementById('positionList'); positionList.innerHTML = ''; (pos||[]).forEach(p => { positionList.innerHTML += `<tr><td class="p-2">${p.name}</td><td class="p-2 text-right"><button class="text-red-600" onclick="deletePosition(${p.id})">삭제</button></td></tr>`; }); await populateDeptPositionSelects(); } catch(e) { alert('설정 정보 로딩 실패'); }}
-    async function populateDeptPositionSelects() { try { const { data: depts } = await db.from('departments').select('name'); const { data: pos } = await db.from('positions').select('name'); [admNewEmpDept, admEditEmpDept].forEach(sel => { sel.innerHTML = '<option value="" disabled selected>부서</option>'; (depts || []).forEach(d => sel.innerHTML += `<option value="${d.name}">${d.name}</option>`); }); [admNewEmpPosition, admEditEmpPosition].forEach(sel => { sel.innerHTML = '<option value="" disabled selected>직책</option>'; (pos || []).forEach(p => sel.innerHTML += `<option value="${p.name}">${p.name}</option>`); }); } catch(e) { alert('부서/직책 로딩 실패'); }}
-    async function renderAdmRequestTable() { try { const { data, error } = await db.from('leave_requests').select('*').order('id', { ascending: false }); if (error) throw error; admRequestsTable.innerHTML = ''; (data || []).forEach(req => { let actions = '-'; if (req.status === 'pending') actions = `<button class="text-green-600 mr-2" onclick="updateRequestStatus(${req.id}, 'approved')">승인</button><button class="text-red-600" onclick="updateRequestStatus(${req.id}, 'rejected')">반려</button>`; admRequestsTable.innerHTML += `<tr><td class="p-2 text-sm">${req.employeeName}</td><td class="p-2 text-sm">${(req.dates || []).join(', ')}</td><td class="p-2 text-sm">${req.reason}</td><td class="p-2 text-sm">${req.status}</td><td class="p-2 text-center">${actions}</td></tr>`; }); } catch(e) { alert(`연차 목록 로딩 실패: ${e.message}`); }}
-    async function updateAdminSummary() {
-      try {
-        const { data, error } = await db.from('leave_requests').select('status,dates'); if (error) throw error;
-        let pending = 0, approved = 0, used = 0, rejected = 0;
-        const today = dayjs();
-        (data || []).forEach(req => {
-            if (req.status === 'pending') pending++;
-            else if (req.status === 'approved') {
-                const isUsed = req.dates.some(d => dayjs(d).isBefore(today, 'day'));
-                if (isUsed) used++; else approved++;
-            }
-            else if (req.status === 'rejected') rejected++;
-        });
-        document.getElementById('admSummaryPending').textContent = `${pending}건`;
-        document.getElementById('admSummaryApproved').textContent = `${approved}건`;
-        document.getElementById('admSummaryUsed').textContent = `${used}건`;
-        document.getElementById('admSummaryRejected').textContent = `${rejected}건`;
-      } catch(e) { console.error("요약 업데이트 실패", e); }
-    }
+    const tbody = document.getElementById('empStatusTable');
+    tbody.innerHTML = '';
     
-    async function refreshEmployeeData() {
-        if(!currentEmployee) return;
-        try {
-            const { data, error } = await db.from('leave_requests').select('*'); if (error) throw error;
-            const legal = 15;
-            let pending = 0, approved = 0, used = 0;
-            const myRequests = data.filter(r => r.employeeId === currentEmployee.id);
-            myRequests.forEach(req => { if(req.status === 'pending') pending += req.dates.length; else if(req.status === 'approved') { req.dates.forEach(d => { dayjs(d).isBefore(dayjs(), 'day') ? used++ : approved++; });}});
-            empTotalLeave.textContent = `${legal}일`; empPendingLeave.textContent = `${pending}일`; empApprovedLeave.textContent = `${approved}일`; empUsedLeave.textContent = `${used}일`; empRemainingLeave.textContent = `${legal - approved - used}일`;
-            const events = data.map(req => ({ title: req.employeeName, start: req.dates[0], end: dayjs(req.dates[req.dates.length - 1]).add(1, 'day').format('YYYY-MM-DD'), backgroundColor: req.status === 'approved' ? '#34d399' : '#facc15' }));
-            empCalendar.removeAllEvents(); empCalendar.addEventSource(events);
-        } catch(e) { alert('연차 데이터 로딩 실패'); }
-    }
-
-    // --- 앱 실행 로직 ---
-    document.addEventListener('DOMContentLoaded', () => {
-      const loginSection = document.getElementById('loginSection');
-      const adminPortal = document.getElementById('adminPortal');
-      const employeePortal = document.getElementById('employeePortal');
-
-      const showAdminPortal = () => { loginSection.classList.add('hidden'); adminPortal.classList.remove('hidden'); initializeAdminPortal(); };
-      const showEmployeePortal = () => { loginSection.classList.add('hidden'); employeePortal.classList.remove('hidden'); initializeEmployeePortal(); };
-      const showAdminSection = (name) => {
-        ['admEmployeeSection', 'admSettingsSection', 'admLeaveListSection'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = id === name ? 'block' : 'none'; });
-        ['tabEmployees', 'tabSettings', 'tabList'].forEach(id => { const tab = document.getElementById(id); if(!tab) return; if(id.toLowerCase().includes(name.replace('adm','').replace('Section','').toLowerCase())) { tab.classList.add('bg-blue-500', 'text-white'); tab.classList.remove('bg-gray-200'); } else { tab.classList.remove('bg-blue-500', 'text-white'); tab.classList.add('bg-gray-200'); }});
-      };
-      
-      const initializeAdminPortal = async () => {
-        showAdminSection('admLeaveListSection');
-        await renderAdmRequestTable(); await populateDeptPositionSelects(); await updateAdminSummary();
-        document.getElementById('tabList').onclick = async () => { showAdminSection('admLeaveListSection'); await renderAdmRequestTable(); };
-        document.getElementById('tabEmployees').onclick = async () => { showAdminSection('admEmployeeSection'); await renderAdmEmployees(); };
-        document.getElementById('tabSettings').onclick = async () => { showAdminSection('admSettingsSection'); await renderSettings(); };
-      };
-      
-      const initializeEmployeePortal = async () => {
-        document.getElementById('employeeInfo').textContent = `${currentEmployee.name} (${currentEmployee.dept})`;
-        const calendarEl = document.getElementById('empCalendar');
-        empCalendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth', locale: 'ko',
-            dateClick: (info) => { selectedDates.has(info.dateStr) ? selectedDates.delete(info.dateStr) : selectedDates.add(info.dateStr); info.dayEl.classList.toggle('selected'); renderSelectedDates(); }
-        });
-        empCalendar.render();
-        await refreshEmployeeData();
-      };
-      const renderSelectedDates = () => { empSelectedCount.textContent = selectedDates.size; empSelectedDatesList.innerHTML = ''; Array.from(selectedDates).sort().forEach(d => { empSelectedDatesList.innerHTML += `<li>${d}</li>`; }); };
-
-      document.getElementById('adminLoginForm').addEventListener('submit', async (e) => { e.preventDefault(); const email = document.getElementById('adminLoginId').value.trim(); const password = document.getElementById('adminLoginPass').value.trim(); try { const { error } = await db.auth.signInWithPassword({ email, password }); if (error) throw error; showAdminPortal(); } catch (error) { alert(`로그인 실패: ${error.message}`); }});
-      document.getElementById('employeeLoginForm').addEventListener('submit', async (e) => { e.preventDefault(); const name = document.getElementById('empLoginName').value.trim(); const pass = document.getElementById('empLoginPass').value.trim(); try { const { data, error } = await db.from('employees').select('*').eq('name', name).eq('password', pass).single(); if (error || !data) throw new Error('이름 또는 비밀번호가 올바르지 않습니다.'); currentEmployee = data; sessionStorage.setItem('loggedInEmployee', JSON.stringify(data)); showEmployeePortal(); } catch (error) { alert(`로그인 실패: ${error.message}`); }});
-      
-      document.getElementById('admAddEmployeeForm').addEventListener('submit', async (e) => { e.preventDefault(); const newEmp = { name: admNewEmpName.value, dept: admNewEmpDept.value, position: admNewEmpPosition.value, entryDate: admNewEmpEntryDate.value, password: admNewEmpPassword.value }; try { const { error } = await db.from('employees').insert([newEmp]); if (error) throw error; e.target.reset(); await renderAdmEmployees(); } catch(e) { alert('직원 추가 실패'); }});
-      document.getElementById('admEditEmployeeForm').addEventListener('submit', async (e) => { e.preventDefault(); const updatedInfo = { name: admEditEmpName.value, dept: admEditEmpDept.value, position: admEditEmpPosition.value, entryDate: admEditEmpEntryDate.value }; try { const { error } = await db.from('employees').update(updatedInfo).eq('id', editingEmpId); if (error) throw error; alert('수정 완료'); document.getElementById('editEmployeeFormContainer').classList.add('hidden'); await renderAdmEmployees(); } catch(e) { alert('수정 실패'); }});
-      document.getElementById('editCancelBtn').addEventListener('click', () => { document.getElementById('editEmployeeFormContainer').classList.add('hidden'); });
-      
-      document.getElementById('addDeptForm').addEventListener('submit', async (e) => { e.preventDefault(); const name = newDeptName.value.trim(); try { const { error } = await db.from('departments').insert([{ name }]); if(error) throw error; newDeptName.value = ''; await renderSettings(); } catch(error) { alert('부서 추가 실패'); }});
-      document.getElementById('addPositionForm').addEventListener('submit', async (e) => { e.preventDefault(); const name = newPositionName.value.trim(); try { const { error } = await db.from('positions').insert([{ name }]); if(error) throw error; newPositionName.value = ''; await renderSettings(); } catch(error) { alert('직책 추가 실패'); }});
-      
-      document.getElementById('empApplyBtn').addEventListener('click', () => { if (selectedDates.size === 0) { alert('날짜를 선택해주세요.'); return; } renderSelectedDates(); document.getElementById('empFormContainer').classList.remove('hidden'); });
-      document.getElementById('empCancelBtn').addEventListener('click', () => { document.getElementById('empFormContainer').classList.add('hidden'); });
-      document.getElementById('empLeaveForm').addEventListener('submit', async (e) => { e.preventDefault(); const dates = Array.from(selectedDates).sort(); const reason = document.getElementById('empReason').value.trim(); if(!reason) { alert('사유를 입력하세요.'); return; } try { const { error } = await db.from('leave_requests').insert([{ employeeId: currentEmployee.id, employeeName: currentEmployee.name, employeeDept: currentEmployee.dept, dates: dates, reason: reason, status: 'pending', submittedAt: dayjs().format('YYYY-MM-DD') }]); if (error) throw error; alert('연차 신청 완료'); selectedDates.clear(); document.querySelectorAll('.fc-daygrid-day.selected').forEach(d => d.classList.remove('selected')); document.getElementById('empFormContainer').classList.add('hidden'); e.target.reset(); await refreshEmployeeData(); } catch(error) { alert(`연차 신청 실패: ${error.message}`); }});
-
-      const loggedInUser = sessionStorage.getItem('loggedInEmployee');
-      if (loggedInUser) { currentEmployee = JSON.parse(loggedInUser); showEmployeePortal(); }
+    data.forEach(request => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="p-2 text-xs">${request.employees.name}</td>
+        <td class="p-2 text-xs">${formatDate(request.created_at)}</td>
+        <td class="p-2 text-xs">${formatDate(request.leave_date)}</td>
+        <td class="p-2 text-xs">${request.reason || '-'}</td>
+        <td class="p-2 text-center">
+          <button onclick="managerApproveRequest('${request.id}')" class="px-2 py-1 text-xs bg-green-500 text-white rounded mr-1">승인</button>
+          <button onclick="managerRejectRequest('${request.id}')" class="px-2 py-1 text-xs bg-red-500 text-white rounded">반려</button>
+        </td>
+      `;
+      tbody.appendChild(row);
     });
+  } catch (error) {
+    console.error('중간 승인 대기 연차 로드 실패:', error);
+  }
+}
+
+// 중간 관리자 승인
+async function managerApproveRequest(id) {
+  if (!currentEmployee || !currentEmployee.can_approve_leave) return;
+  
+  try {
+    const { error } = await supabase
+      .from('leave_requests')
+      .update({ 
+        status: 'manager_approved',
+        manager_approved_at: new Date().toISOString(),
+        manager_id: currentEmployee.id
+      })
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    alert('중간 승인이 완료되었습니다.');
+    loadManagerPendingRequests();
+    refreshEmployeeData();
+  } catch (error) {
+    console.error('중간 승인 실패:', error);
+    alert('승인 처리 중 오류가 발생했습니다.');
+  }
+}
+
+// 중간 관리자 반려
+async function managerRejectRequest(id) {
+  if (!currentEmployee || !currentEmployee.can_approve_leave) return;
+  
+  const reason = prompt('반려 사유를 입력하세요:');
+  if (!reason) return;
+  
+  try {
+    const { error } = await supabase
+      .from('leave_requests')
+      .update({ 
+        status: 'rejected',
+        rejected_at: new Date().toISOString(),
+        rejection_reason: reason,
+        manager_id: currentEmployee.id
+      })
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    alert('반려 처리가 완료되었습니다.');
+    loadManagerPendingRequests();
+    refreshEmployeeData();
+  } catch (error) {
+    console.error('반려 처리 실패:', error);
+    alert('반려 처리 중 오류가 발생했습니다.');
+  }
+}
+
+// 사업주 가입
+async function registerOwner() {
+  const email = document.getElementById('ownerEmail').value;
+  const password = document.getElementById('ownerPassword').value;
+  const passwordConfirm = document.getElementById('ownerPasswordConfirm').value;
+  
+  if (password !== passwordConfirm) {
+    alert('비밀번호가 일치하지 않습니다.');
+    return;
+  }
+  
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          role: 'owner'
+        }
+      }
+    });
+    
+    if (error) throw error;
+    
+    alert('사업주 가입이 완료되었습니다. 이메일을 확인하여 계정을 활성화하세요.');
+    showEmployeeLogin();
+  } catch (error) {
+    console.error('사업주 가입 실패:', error);
+    alert('가입 중 오류가 발생했습니다: ' + error.message);
+  }
+}
+
+// 비밀번호 초기화 단계1: 이메일 확인
+async function resetPasswordStep1() {
+  const email = document.getElementById('resetEmail').value;
+  
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/reset-password'
+    });
+    
+    if (error) throw error;
+    
+    alert('비밀번호 재설정 링크가 이메일로 전송되었습니다.');
+    showEmployeeLogin();
+  } catch (error) {
+    console.error('비밀번호 재설정 이메일 전송 실패:', error);
+    alert('이메일 전송 중 오류가 발생했습니다.');
+  }
+}
+
+// 문서 요청
+async function submitDocumentRequest() {
+  const docType = document.getElementById('empDocType').value;
+  const reason = document.getElementById('empDocReason').value;
+  
+  if (!docType || !reason) {
+    alert('모든 필드를 입력해주세요.');
+    return;
+  }
+  
+  try {
+    const { error } = await supabase
+      .from('document_requests')
+      .insert({
+        employee_id: currentEmployee.id,
+        document_type: docType,
+        reason: reason,
+        status: 'pending',
+        requested_at: new Date().toISOString()
+      });
+    
+    if (error) throw error;
+    
+    alert('문서 요청이 제출되었습니다.');
+    document.getElementById('empDocRequestForm').reset();
+    loadEmployeeDocuments();
+  } catch (error) {
+    console.error('문서 요청 제출 실패:', error);
+    alert('문서 요청 제출 중 오류가 발생했습니다.');
+  }
+}
+
+// 직원 문서 목록 로드
+async function loadEmployeeDocuments() {
+  try {
+    const { data, error } = await supabase
+      .from('document_requests')
+      .select('*')
+      .eq('employee_id', currentEmployee.id)
+      .order('requested_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const docList = document.getElementById('empDocList');
+    docList.innerHTML = '';
+    
+    data.forEach(doc => {
+      const docDiv = document.createElement('div');
+      docDiv.className = 'p-3 border rounded mb-2';
+      docDiv.innerHTML = `
+        <div class="flex justify-between items-center">
+          <div>
+            <strong>${doc.document_type}</strong>
+            <p class="text-sm text-gray-600">${doc.reason}</p>
+            <p class="text-xs text-gray-500">요청일: ${formatDate(doc.requested_at)}</p>
+          </div>
+          <span class="px-2 py-1 text-xs rounded ${
+            doc.status === 'pending' ? 'bg-yellow-200 text-yellow-800' :
+            doc.status === 'approved' ? 'bg-green-200 text-green-800' :
+            'bg-red-200 text-red-800'
+          }">${getStatusText(doc.status)}</span>
+        </div>
+      `;
+      docList.appendChild(docDiv);
+    });
+  } catch (error) {
+    console.error('직원 문서 목록 로드 실패:', error);
+  }
+}
+
+// 상태 텍스트 변환
+function getStatusText(status) {
+  switch (status) {
+    case 'pending': return '승인 대기';
+    case 'approved': return '승인 완료';
+    case 'rejected': return '반려';
+    default: return status;
+  }
+}
+
+// 문서 수동 제출
+async function submitManualDocument() {
+  const docType = document.getElementById('manualDocType').value;
+  const file = document.getElementById('manualDocFile').files[0];
+  const signature = capturedSignature;
+  
+  if (!docType || !file || !signature) {
+    alert('모든 필드를 입력해주세요.');
+    return;
+  }
+  
+  try {
+    // 파일 업로드
+    const fileName = `${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(fileName, file);
+    
+    if (uploadError) throw uploadError;
+    
+    // 문서 요청 생성
+    const { error: insertError } = await supabase
+      .from('document_requests')
+      .insert({
+        employee_id: currentEmployee.id,
+        document_type: docType,
+        reason: '수동 제출',
+        status: 'pending',
+        requested_at: new Date().toISOString(),
+        file_path: fileName,
+        signature: signature
+      });
+    
+    if (insertError) throw insertError;
+    
+    alert('문서가 성공적으로 제출되었습니다.');
+    closeModal('empManualDocModal');
+    loadEmployeeDocuments();
+  } catch (error) {
+    console.error('문서 수동 제출 실패:', error);
+    alert('문서 제출 중 오류가 발생했습니다.');
+  }
+}
+
+// 서명 캡처
+let capturedSignature = null;
+
+function captureSignature() {
+  const canvas = document.getElementById('signatureCanvas');
+  capturedSignature = canvas.toDataURL();
+  alert('서명이 캡처되었습니다.');
+}
+
+function clearSignature() {
+  const canvas = document.getElementById('signatureCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  capturedSignature = null;
+}
+
+// 서명 모달 관련 함수들
+function openSignatureModal() {
+  document.getElementById('signatureModal').classList.remove('hidden');
+  initSignatureCanvas();
+}
+
+function closeSignatureModal() {
+  document.getElementById('signatureModal').classList.add('hidden');
+}
+
+function captureSignatureModal() {
+  const canvas = document.getElementById('signatureCanvasModal');
+  capturedSignature = canvas.toDataURL();
+  closeSignatureModal();
+  alert('서명이 완료되었습니다.');
+}
+
+function clearSignatureModal() {
+  const canvas = document.getElementById('signatureCanvasModal');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// 서명 캔버스 초기화
+function initSignatureCanvas() {
+  const canvas = document.getElementById('signatureCanvas');
+  const ctx = canvas.getContext('2d');
+  
+  let isDrawing = false;
+  let lastX = 0;
+  let lastY = 0;
+  
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseout', stopDrawing);
+  
+  function startDrawing(e) {
+    isDrawing = true;
+    [lastX, lastY] = [e.offsetX, e.offsetY];
+  }
+  
+  function draw(e) {
+    if (!isDrawing) return;
+    
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(e.offsetX, e.offsetY);
+    ctx.stroke();
+    
+    [lastX, lastY] = [e.offsetX, e.offsetY];
+  }
+  
+  function stopDrawing() {
+    isDrawing = false;
+  }
+}
+
+// 관리자 문서 관리
+async function loadAdminDocuments() {
+  try {
+    const { data, error } = await supabase
+      .from('document_requests')
+      .select(`
+        *,
+        employees!inner(name, department, position)
+      `)
+      .order('requested_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const tableDiv = document.getElementById('admDocRequestsTable');
+    tableDiv.innerHTML = `
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="p-2 text-left text-xs">직원</th>
+            <th class="p-2 text-left text-xs">문서 종류</th>
+            <th class="p-2 text-left text-xs">요청 사유</th>
+            <th class="p-2 text-left text-xs">요청일</th>
+            <th class="p-2 text-left text-xs">상태</th>
+            <th class="p-2 text-center text-xs">처리</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(doc => `
+            <tr>
+              <td class="p-2 text-xs">${doc.employees.name} (${doc.employees.department})</td>
+              <td class="p-2 text-xs">${doc.document_type}</td>
+              <td class="p-2 text-xs">${doc.reason}</td>
+              <td class="p-2 text-xs">${formatDate(doc.requested_at)}</td>
+              <td class="p-2 text-xs">
+                <span class="px-2 py-1 text-xs rounded ${
+                  doc.status === 'pending' ? 'bg-yellow-200 text-yellow-800' :
+                  doc.status === 'approved' ? 'bg-green-200 text-green-800' :
+                  'bg-red-200 text-red-800'
+                }">${getStatusText(doc.status)}</span>
+              </td>
+              <td class="p-2 text-center">
+                ${doc.status === 'pending' ? `
+                  <button onclick="approveDocument('${doc.id}')" class="px-2 py-1 text-xs bg-green-500 text-white rounded mr-1">승인</button>
+                  <button onclick="rejectDocument('${doc.id}')" class="px-2 py-1 text-xs bg-red-500 text-white rounded">반려</button>
+                ` : '-'}
+                ${doc.file_path ? `<button onclick="viewDocument('${doc.id}')" class="px-2 py-1 text-xs bg-blue-500 text-white rounded">보기</button>` : ''}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (error) {
+    console.error('관리자 문서 목록 로드 실패:', error);
+  }
+}
+
+// 문서 승인
+async function approveDocument(id) {
+  try {
+    const { error } = await supabase
+      .from('document_requests')
+      .update({ 
+        status: 'approved',
+        approved_at: new Date().toISOString()
+      })
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    alert('문서가 승인되었습니다.');
+    loadAdminDocuments();
+  } catch (error) {
+    console.error('문서 승인 실패:', error);
+    alert('승인 처리 중 오류가 발생했습니다.');
+  }
+}
+
+// 문서 반려
+async function rejectDocument(id) {
+  const reason = prompt('반려 사유를 입력하세요:');
+  if (!reason) return;
+  
+  try {
+    const { error } = await supabase
+      .from('document_requests')
+      .update({ 
+        status: 'rejected',
+        rejected_at: new Date().toISOString(),
+        rejection_reason: reason
+      })
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    alert('문서가 반려되었습니다.');
+    loadAdminDocuments();
+  } catch (error) {
+    console.error('문서 반려 실패:', error);
+    alert('반려 처리 중 오류가 발생했습니다.');
+  }
+}
+
+// 문서 보기
+async function viewDocument(id) {
+  try {
+    const { data, error } = await supabase
+      .from('document_requests')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    
+    const content = document.getElementById('docViewContent');
+    content.innerHTML = `
+      <div class="space-y-4">
+        <div>
+          <strong>문서 종류:</strong> ${data.document_type}
+        </div>
+        <div>
+          <strong>요청 사유:</strong> ${data.reason}
+        </div>
+        <div>
+          <strong>요청일:</strong> ${formatDate(data.requested_at)}
+        </div>
+        ${data.file_path ? `
+          <div>
+            <strong>첨부 파일:</strong>
+            <a href="${supabase.storage.from('documents').getPublicUrl(data.file_path).data.publicUrl}" 
+               target="_blank" class="text-blue-600 underline">파일 보기</a>
+          </div>
+        ` : ''}
+        ${data.signature ? `
+          <div>
+            <strong>서명:</strong>
+            <img src="${data.signature}" alt="서명" class="max-w-xs border" />
+          </div>
+        ` : ''}
+      </div>
+    `;
+    
+    document.getElementById('docViewModal').classList.remove('hidden');
+  } catch (error) {
+    console.error('문서 상세 로드 실패:', error);
+    alert('문서 상세 정보를 불러오는데 실패했습니다.');
+  }
+}
+
+// 이벤트 리스너 등록
+document.addEventListener('DOMContentLoaded', function() {
+  // 사업주 가입 폼
+  document.getElementById('ownerRegisterForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    registerOwner();
+  });
+  
+  // 비밀번호 초기화 단계1 폼
+  document.getElementById('resetStep1Form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    resetPasswordStep1();
+  });
+  
+  // 직원 문서 요청 폼
+  document.getElementById('empDocRequestForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    submitDocumentRequest();
+  });
+  
+  // 문서 수동 제출 폼
+  document.getElementById('empManualDocForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    submitManualDocument();
+  });
+  
+  // 서명 캔버스 초기화
+  initSignatureCanvas();
+});
+
+// ... existing code ...JavaScript 코드는 다음 메시지에서 계속...
   </script>
 </body>
 </html>
