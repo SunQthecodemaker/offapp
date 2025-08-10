@@ -68,8 +68,18 @@
   <div id="adminPortal" class="hidden">
     <div class="max-w-6xl mx-auto">
       <div class="flex justify-between items-center mb-4"><h1 class="text-3xl font-bold">연차 관리 (관리자)</h1><button onclick="adminLogout()" class="px-3 py-1 text-sm bg-gray-300 rounded">로그아웃</button></div>
-      <div class="flex gap-4 mb-4"><button id="tabList" class="tab-btn bg-blue-500 text-white px-3 py-2 rounded">연차 목록</button><button id="tabEmployees" class="tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">직원 관리</button><button id="tabSettings" class="tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">사업장 설정</button></div>
-      <div id="admLeaveListSection" class="section"><div class="bg-white shadow rounded overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">직원</th><th class="p-2 text-left text-xs">신청 날짜</th><th class="p-2 text-left text-xs">사유</th><th class="p-2 text-left text-xs">상태</th><th class="p-2 text-center text-xs">처리</th></tr></thead><tbody id="admRequestsTable"></tbody></table></div></div>
+       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mb-6 text-sm">
+        <div class="bg-yellow-100 p-4 rounded"><p>승인 대기</p><p class="text-xl font-bold" id="admSummaryPending">0건</p></div>
+        <div class="bg-green-100 p-4 rounded"><p>승인 완료 (예정)</p><p class="text-xl font-bold" id="admSummaryApproved">0건</p></div>
+        <div class="bg-gray-200 p-4 rounded"><p>사용 완료</p><p class="text-xl font-bold" id="admSummaryUsed">0건</p></div>
+        <div class="bg-red-100 p-4 rounded"><p>반려</p><p class="text-xl font-bold" id="admSummaryRejected">0건</p></div>
+      </div>
+      <div class="flex gap-4 mb-4">
+        <button id="tabList" class="tab-btn bg-blue-500 text-white px-3 py-2 rounded">연차 목록</button>
+        <button id="tabEmployees" class="tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">직원 관리</button>
+        <button id="tabSettings" class="tab-btn bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded">사업장 설정</button>
+      </div>
+      <div id="admLeaveListSection" class="section"><div class="bg-white shadow rounded overflow-x-auto p-4"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">직원</th><th class="p-2 text-left text-xs">신청 날짜</th><th class="p-2 text-left text-xs">사유</th><th class="p-2 text-left text-xs">상태</th><th class="p-2 text-center text-xs">처리</th></tr></thead><tbody id="admRequestsTable"></tbody></table></div></div>
       <div id="admEmployeeSection" class="section" style="display:none;"><div class="bg-white shadow rounded p-4"><h2 class="text-lg font-semibold mb-3">직원 목록</h2><table class="min-w-full divide-y divide-gray-200 mb-4"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">ID</th><th class="p-2 text-left text-xs">이름</th><th class="p-2 text-left text-xs">부서</th><th class="p-2 text-left text-xs">직책</th><th class="p-2 text-left text-xs">입사일</th><th class="p-2 text-left text-xs">비밀번호</th><th class="p-2 text-center text-xs">수정/삭제</th></tr></thead><tbody id="admEmployeesTable"></tbody></table><h3 class="text-md font-semibold mb-2">직원 추가</h3><form id="admAddEmployeeForm" class="grid grid-cols-1 md:grid-cols-5 gap-2 mb-4"><input id="admNewEmpName" type="text" placeholder="이름" class="p-2 border rounded" required /><select id="admNewEmpDept" class="p-2 border rounded" required><option value="" disabled selected>부서</option></select><select id="admNewEmpPosition" class="p-2 border rounded" required><option value="" disabled selected>직책</option></select><input id="admNewEmpEntryDate" type="date" class="p-2 border rounded" required /><input id="admNewEmpPassword" type="password" placeholder="로그인 비번" class="p-2 border rounded" /><div class="md:col-span-5 text-right"><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></div></form><div id="editEmployeeFormContainer" class="hidden mt-8"><h3 class="text-md font-semibold mb-2">직원 정보 수정</h3><form id="admEditEmployeeForm" class="grid grid-cols-1 md:grid-cols-5 gap-2 mb-4"><input id="admEditEmpName" type="text" class="p-2 border rounded" required /><select id="admEditEmpDept" class="p-2 border rounded" required></select><select id="admEditEmpPosition" class="p-2 border rounded" required></select><input id="admEditEmpEntryDate" type="date" class="p-2 border rounded" required /><div class="md:col-span-5 text-right"><button type="button" id="editCancelBtn" class="bg-gray-400 text-white px-4 py-2 rounded mr-2">취소</button><button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">저장</button></div></form></div></div></div>
       <div id="admSettingsSection" class="section" style="display:none;"><div class="bg-white shadow rounded p-4 space-y-6"><h2 class="text-lg font-semibold mb-2">사업장 설정</h2><div><h3 class="text-md font-semibold">부서 목록</h3><table class="min-w-full mb-2"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">부서명</th><th class="p-2 text-right text-xs">삭제</th></tr></thead><tbody id="deptList"></tbody></table><form id="addDeptForm" class="flex gap-2"><input id="newDeptName" type="text" placeholder="새 부서명" class="flex-grow p-2 border rounded" required /><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></form></div><div><h3 class="text-md font-semibold">직책 목록</h3><table class="min-w-full mb-2"><thead class="bg-gray-50"><tr><th class="p-2 text-left text-xs">직책명</th><th class="p-2 text-right text-xs">삭제</th></tr></thead><tbody id="positionList"></tbody></table><form id="addPositionForm" class="flex gap-2"><input id="newPositionName" type="text" placeholder="새 직책명" class="flex-grow p-2 border rounded" required /><button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">추가</button></form></div></div></div>
     </div>
@@ -89,23 +99,43 @@
     function showEmployeeLogin() { document.getElementById('ownerLoginContainer').classList.add('hidden'); document.getElementById('employeeLoginContainer').classList.remove('hidden'); }
     async function adminLogout() { await db.auth.signOut(); location.reload(); }
     function employeeLogout() { sessionStorage.removeItem('loggedInEmployee'); currentEmployee = null; location.reload(); }
+    
     async function deleteEmployee(id) { if (!confirm(`직원을 삭제하시겠습니까?`)) return; try { const { error } = await db.from('employees').delete().eq('id', id); if (error) throw error; await renderAdmEmployees(); } catch (e) { alert('직원 삭제 실패'); }}
     async function deleteDept(id) { if (!confirm(`삭제하시겠습니까?`)) return; try { const { error } = await db.from('departments').delete().eq('id', id); if(error) throw error; await renderSettings(); } catch (e) { alert('부서 삭제 실패'); }}
     async function deletePosition(id) { if (!confirm(`삭제하시겠습니까?`)) return; try { const { error } = await db.from('positions').delete().eq('id', id); if(error) throw error; await renderSettings(); } catch (e) { alert('직책 삭제 실패'); }}
     async function showEditEmployee(id) { try { const { data: emp, error } = await db.from('employees').select('*').eq('id', id).single(); if (error) throw error; editingEmpId = id; admEditEmpName.value = emp.name; admEditEmpDept.value = emp.dept; admEditEmpPosition.value = emp.position; admEditEmpEntryDate.value = emp.entryDate; editEmployeeFormContainer.classList.remove('hidden'); } catch(e) { alert('직원 정보 로딩 실패'); }}
-    async function updateRequestStatus(id, status) { if(!confirm(`'${status}' 상태로 변경?`)) return; try { const { error } = await db.from('leave_requests').update({ status }).eq('id', id); if (error) throw error; alert('상태 변경 완료'); await renderAdmRequestTable(); } catch(e) { alert(`상태 변경 실패: ${e.message}`); }}
+    async function updateRequestStatus(id, status) { if(!confirm(`'${status}' 상태로 변경?`)) return; try { const { error } = await db.from('leave_requests').update({ status }).eq('id', id); if (error) throw error; alert('상태 변경 완료'); await renderAdmRequestTable(); await updateAdminSummary(); } catch(e) { alert(`상태 변경 실패: ${e.message}`); }}
 
     // --- 데이터 렌더링 함수 ---
     async function renderAdmEmployees() { try{ const { data, error } = await db.from('employees').select('*').order('id'); if (error) throw error; const tbody = document.getElementById('admEmployeesTable'); tbody.innerHTML = ''; (data || []).forEach(emp => { tbody.innerHTML += `<tr><td class="p-2">${emp.id}</td><td class="p-2">${emp.name}</td><td class="p-2">${emp.dept}</td><td class="p-2">${emp.position}</td><td class="p-2">${emp.entryDate}</td><td class="p-2">${emp.password ? '******' : '-'}</td><td class="p-2 text-center"><button class="text-blue-600 mr-2" onclick="showEditEmployee(${emp.id})">수정</button><button class="text-red-600" onclick="deleteEmployee(${emp.id})">삭제</button></td></tr>`; }); } catch(e) { alert('직원 목록 로딩 실패'); }}
     async function renderSettings() { try { const { data: depts, error: dErr } = await db.from('departments').select('*'); if (dErr) throw dErr; const deptList = document.getElementById('deptList'); deptList.innerHTML = ''; (depts||[]).forEach(d => { deptList.innerHTML += `<tr><td class="p-2">${d.name}</td><td class="p-2 text-right"><button class="text-red-600" onclick="deleteDept(${d.id})">삭제</button></td></tr>`; }); const { data: pos, error: pErr } = await db.from('positions').select('*'); if (pErr) throw pErr; const positionList = document.getElementById('positionList'); positionList.innerHTML = ''; (pos||[]).forEach(p => { positionList.innerHTML += `<tr><td class="p-2">${p.name}</td><td class="p-2 text-right"><button class="text-red-600" onclick="deletePosition(${p.id})">삭제</button></td></tr>`; }); await populateDeptPositionSelects(); } catch(e) { alert('설정 정보 로딩 실패'); }}
     async function populateDeptPositionSelects() { try { const { data: depts } = await db.from('departments').select('name'); const { data: pos } = await db.from('positions').select('name'); [admNewEmpDept, admEditEmpDept].forEach(sel => { sel.innerHTML = '<option value="" disabled selected>부서</option>'; (depts || []).forEach(d => sel.innerHTML += `<option value="${d.name}">${d.name}</option>`); }); [admNewEmpPosition, admEditEmpPosition].forEach(sel => { sel.innerHTML = '<option value="" disabled selected>직책</option>'; (pos || []).forEach(p => sel.innerHTML += `<option value="${p.name}">${p.name}</option>`); }); } catch(e) { alert('부서/직책 로딩 실패'); }}
     async function renderAdmRequestTable() { try { const { data, error } = await db.from('leave_requests').select('*').order('id', { ascending: false }); if (error) throw error; admRequestsTable.innerHTML = ''; (data || []).forEach(req => { let actions = '-'; if (req.status === 'pending') actions = `<button class="text-green-600 mr-2" onclick="updateRequestStatus(${req.id}, 'approved')">승인</button><button class="text-red-600" onclick="updateRequestStatus(${req.id}, 'rejected')">반려</button>`; admRequestsTable.innerHTML += `<tr><td class="p-2 text-sm">${req.employeeName}</td><td class="p-2 text-sm">${(req.dates || []).join(', ')}</td><td class="p-2 text-sm">${req.reason}</td><td class="p-2 text-sm">${req.status}</td><td class="p-2 text-center">${actions}</td></tr>`; }); } catch(e) { alert(`연차 목록 로딩 실패: ${e.message}`); }}
+    async function updateAdminSummary() {
+      try {
+        const { data, error } = await db.from('leave_requests').select('status,dates'); if (error) throw error;
+        let pending = 0, approved = 0, used = 0, rejected = 0;
+        const today = dayjs();
+        (data || []).forEach(req => {
+            if (req.status === 'pending') pending++;
+            else if (req.status === 'approved') {
+                const isUsed = req.dates.some(d => dayjs(d).isBefore(today, 'day'));
+                if (isUsed) used++; else approved++;
+            }
+            else if (req.status === 'rejected') rejected++;
+        });
+        document.getElementById('admSummaryPending').textContent = `${pending}건`;
+        document.getElementById('admSummaryApproved').textContent = `${approved}건`;
+        document.getElementById('admSummaryUsed').textContent = `${used}건`;
+        document.getElementById('admSummaryRejected').textContent = `${rejected}건`;
+      } catch(e) { console.error("요약 업데이트 실패", e); }
+    }
     
     async function refreshEmployeeData() {
         if(!currentEmployee) return;
         try {
             const { data, error } = await db.from('leave_requests').select('*'); if (error) throw error;
-            const legal = 15; // 법정 연차 계산은 추후에 복원
+            const legal = 15;
             let pending = 0, approved = 0, used = 0;
             const myRequests = data.filter(r => r.employeeId === currentEmployee.id);
             myRequests.forEach(req => { if(req.status === 'pending') pending += req.dates.length; else if(req.status === 'approved') { req.dates.forEach(d => { dayjs(d).isBefore(dayjs(), 'day') ? used++ : approved++; });}});
@@ -130,7 +160,7 @@
       
       const initializeAdminPortal = async () => {
         showAdminSection('admLeaveListSection');
-        await renderAdmRequestTable(); await populateDeptPositionSelects();
+        await renderAdmRequestTable(); await populateDeptPositionSelects(); await updateAdminSummary();
         document.getElementById('tabList').onclick = async () => { showAdminSection('admLeaveListSection'); await renderAdmRequestTable(); };
         document.getElementById('tabEmployees').onclick = async () => { showAdminSection('admEmployeeSection'); await renderAdmEmployees(); };
         document.getElementById('tabSettings').onclick = async () => { showAdminSection('admSettingsSection'); await renderSettings(); };
